@@ -5,7 +5,8 @@
 #include <string_view>
 #include "Common.h"
 
-namespace CIo
+/*
+namespace cio
 {
     //This class is ment as a input for string outputing or
     // altering functions
@@ -52,8 +53,9 @@ namespace CIo
         return  CStringRef<CharType>(dataPtr, size);
     }
 }
+*/
 
-namespace CIo
+namespace cio
 {
     using FalseType = std::false_type;
     using TrueType = std::true_type;
@@ -75,8 +77,8 @@ namespace CIo
         template <typename T>
         struct GetStringClassTypeImpl<std::basic_string_view<T>> : TypeIdentity<T> {};
 
-        template <typename T>
-        struct GetStringClassTypeImpl<CStringRef<T>> : TypeIdentity<T> {};
+        //template <typename T>
+        //struct GetStringClassTypeImpl<CStringRef<T>> : TypeIdentity<T> {};
     }
 
     //GetStringClassType

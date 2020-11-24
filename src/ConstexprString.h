@@ -2,22 +2,22 @@
 #define CONSTEXPRSTRING_H
 
 #include "Common.h"
+#include "AuxiliaryTypes.h"
 
-namespace CIo
+namespace cio
 {
-    template<typename CharT, size_t capacity>
+    template<typename CharT, Size capacity>
     struct ConstexprString
     {
             using CharType = CharT;
-            using SizeType = size_t;
-            using OffsetType = i64;
             using ThisType = ConstexprString<CharType, capacity>;
+            using SizeType = cio::Size;
 
         private:
-            static constexpr SizeType TotalSize = capacity + 1;
+            static constexpr Size TotalSize = capacity + 1;
             static constexpr CharT NullTermination = '\0';
 
-            SizeType CurrentSize = 0;
+            Size CurrentSize = 0;
             CharType String[TotalSize] = {};
 
         public:
@@ -126,13 +126,13 @@ namespace CIo
             }
     };
 
-    template<typename CharTo, typename CharFrom, size_t strSize>
+    template<typename CharTo, typename CharFrom, Size strSize>
     constexpr auto PromoteStringCharsTo(const ConstexprString<CharFrom, strSize> str) noexcept
     {
         static_assert (sizeof (CharFrom) <= sizeof (CharTo), "CharFrom needs to be smaller char size than CharTo");
         ConstexprString<CharTo, strSize> returnStr;
 
-        for(size_t i = 0; i < str.Size(); i++)
+        for(Size i = 0; i < str.Size(); i++)
             returnStr += static_cast<CharTo>(str[i]);
 
         return returnStr;

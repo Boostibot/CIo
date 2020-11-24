@@ -4,58 +4,50 @@
 #include "CharSupport.h"
 #include "UniversalString.h"
 #include "OpenMode.h"
+#include "CstdioAdapter.h"
 
-namespace CIo
+namespace cio::Internal
 {
     //Class responsible for safe management of the FILE pointer
-    template<typename OsCharTypeArg>
-    class BasicFileManager
+    template<typename Adaptor>
+    class UnadaptedFileManager
     {
         public:
-            using ThisType       = BasicFileManager;
-            using OsCharType     = OsCharTypeArg;
+            using OsCharType    = typename Adaptor::CharType;
+            using ThisType      = UnadaptedFileManager;
 
         private:
-            using CharSupport    = CharSupport<OsCharType>;
+            using CharSupport   = CharSupport<OsCharType>;
 
         public:
-            using OpenMode       = BasicOpenMode<OsCharType>;
-
-            template<typename CharType>
-            using String        = std::basic_string<CharType>;
-            template<typename CharType>
-            using StringView    = std::basic_string_view<CharType>;
-            template<typename CharType>
-            using CStringRef    = CStringRef<CharType>;
-
+            using OpenMode      = BasicOpenMode<OsCharType>;
             using OsString      = String<OsCharType>;
             using OsStringView  = StringView<OsCharType>;
-            using OsCStringRef  = CStringRef<OsCharType>;
 
             static_assert (CharSupport::IsValid, "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
 
-        public:
-            FILE PTR FilePtr;
+        private:
+            CFile PTR FilePtr;
 
         public:
-            BasicFileManager() noexcept : FilePtr(nullptr)
+            UnadaptedFileManager() noexcept : FilePtr(nullptr)
             {}
 
-            BasicFileManager(const OsStringView path, const OpenMode REF openMode) noexcept : FilePtr(nullptr)
+            UnadaptedFileManager(const OsStringView path, const OpenMode REF openMode) noexcept : FilePtr(nullptr)
             {
                 OpenNew(path, openMode);
             }
 
             template<typename ... OpenModeTypes,
                      std::enable_if_t<OpenModeHelpers::AreOpenModeFlags<OpenModeTypes...>(), i32> = 0>
-            BasicFileManager(const OsStringView path, OpenModeTypes ... openModes) noexcept : FilePtr(nullptr)
+            UnadaptedFileManager(const OsStringView path, OpenModeTypes ... openModes) noexcept : FilePtr(nullptr)
             {
                 OpenNew(path, openModes...);
             }
 
         public:
-            BasicFileManager(const ThisType REF) = delete;
-            BasicFileManager(ThisType RVALUE_REF other) noexcept
+            UnadaptedFileManager(const ThisType REF) = delete;
+            UnadaptedFileManager(ThisType RVALUE_REF other) noexcept
             {
                 this->FilePtr = other.FilePtr;
                 other.FilePtr = nullptr;
@@ -65,7 +57,7 @@ namespace CIo
             ThisType REF operator=(const ThisType REF) = delete;
             ThisType REF operator=(ThisType RVALUE_REF other) noexcept
             {
-                BasicFileManager temp(std::move(other));
+                ThisType temp(std::move(other));
                 this->Swap(temp);
 
                 return PTR_VAL(this);
@@ -77,10 +69,13 @@ namespace CIo
             }
 
         public:
-            ~BasicFileManager() noexcept
+            ~UnadaptedFileManager() noexcept
             {
                 Close();
             }
+
+        public:
+            inline CFile * REF GetCFile() {return FilePtr;}
 
         public:
             inline void Swap(ThisType REF other) noexcept
@@ -91,6 +86,8 @@ namespace CIo
             {
                 first.Swap(second);
             }
+
+        public:
             bool OpenNew(const OsStringView path, const OpenMode REF openMode) noexcept
             {
                 if(NOT openMode.IsValid())
@@ -106,6 +103,7 @@ namespace CIo
 
                 return OpenNewInternal(path, openMode);
             }
+
             template<typename ... OpenModeTypes,
                      std::enable_if_t<OpenModeHelpers::AreOpenModeFlags<OpenModeTypes...>(), i32> = 0>
             inline bool OpenNew(const OsStringView path, OpenModeTypes ... openModes) noexcept
@@ -119,15 +117,9 @@ namespace CIo
                 if(path.empty())
                     return false;
 
-                //The checking for the return of the function can be considered redundant
-                // This function will not be used for checking if file was closed succesfully but rather for opening
-                // a new one. If such behaviour is desired one should assure that it was infact the closing that
-                // caused the error not the opening. Such checking can be done through the Close() function.
-                // This implementation is faster and equally as convinient
                 ThisType::CloseFile(this->FilePtr);
 
-                //No need to check for return state - will be checked at the end through IsOpen
-                FilePtr = CharSupport::fopen(path.data(), openMode.data());
+                FilePtr = Adaptor::fopen(path.data(), openMode.data());
 
                 return IsOpen();
             }
@@ -138,14 +130,14 @@ namespace CIo
             inline bool IsClosed() const noexcept {return (FilePtr == nullptr);}
 
         private:
-            inline static bool CloseFile(FILE PTR filePtr) noexcept
+            inline static bool CloseFile(CFile PTR filePtr) noexcept
             {
                 if(filePtr == nullptr)
                     return true;
 
                 //returns if the closing happened successfully
                 // (0 = success)
-                return (fclose(filePtr) == 0);
+                return (Adaptor::fclose(filePtr) == 0);
             }
         public:
             static bool IsFileOpenable(const OsStringView REF filename) noexcept
@@ -169,15 +161,22 @@ namespace CIo
 
     };
 }
+
+namespace cio
+{
+
+    template<typename OsCharType>
+    using BasicFileManager = Internal::UnadaptedFileManager<CstdioAdapter<OsCharType>>;
+}
 namespace std
 {
     template <typename OsCharT>
-    void swap (CIo::BasicFileManager<OsCharT> REF file1, CIo::BasicFileManager<OsCharT> REF file2) noexcept
+    void swap (cio::BasicFileManager<OsCharT> REF file1, cio::BasicFileManager<OsCharT> REF file2) noexcept
     {
         file1.Swap(file2);
     }
 }
-namespace CIo
+namespace cio
 {
     using FileManager  = BasicFileManager<char8>;
     using WFileManager = BasicFileManager<charW>;

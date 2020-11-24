@@ -3,7 +3,7 @@
 
 #include "CompilerSupport.h"
 
-namespace CIo
+namespace cio
 {
     template<typename OsCharTpeArg>
     struct CharSupport
@@ -26,13 +26,6 @@ namespace CIo
                         return CompilerSupport::fopen(fileName, arguments);
                 else
                     return CompilerSupport::wfopen(fileName, arguments);
-            }
-            static auto freopen(const OsCharType * fileName, const OsCharType * arguments, FILE PTR stream) noexcept
-            {
-                if constexpr (IsUtf8)
-                        return ::freopen(fileName, arguments, stream);
-                else
-                    return ::_wfreopen(fileName, arguments, stream);
             }
 
         public:
@@ -67,7 +60,17 @@ namespace CIo
                     return ::_wstat64(fileName, stats);
             }
 
+            /*
             //Unused
+        public:
+            static auto freopen(const OsCharType * fileName, const OsCharType * arguments, FILE PTR stream) noexcept
+            {
+                if constexpr (IsUtf8)
+                        return ::freopen(fileName, arguments, stream);
+                else
+                    return ::_wfreopen(fileName, arguments, stream);
+            }
+
         public:
             static inline auto fgetc(FILE PTR ptr) noexcept
             {
@@ -98,7 +101,6 @@ namespace CIo
                     return ::fputws(str, ptr);
             }
 
-            //Unused
         public:
             static inline auto mkdir(const OsCharType * dirName) noexcept
             {
@@ -122,7 +124,6 @@ namespace CIo
                     return ::_wrmdir(dirName);
             }
 
-            //Unsused
         public:
             static inline auto strcpy_s(const OsCharType * to, size_t size, const OsCharType * from) noexcept
             {
@@ -131,6 +132,7 @@ namespace CIo
                 else
                     return ::wcscpy_s(to, size, from);
             }
+            */
     };
 }
 

@@ -1,9 +1,10 @@
 #ifndef NEWOPENMODE_H
 #define NEWOPENMODE_H
 
+#include "AuxiliaryTypes.h"
 #include "ConstexprString.h"
 
-namespace CIo
+namespace cio
 {
     namespace Meta
     {
@@ -358,8 +359,6 @@ namespace CIo
             template<typename CharT>
             using ConstexprString         = typename OpenModeConversionState::template ConstexprString<CharT>;
             using OpenModeString          = typename OpenModeConversionState::OpenModeString;
-            template<typename CharT>
-            using StringView              = std::basic_string_view<CharT>;
             using OsStringView            = StringView<OsCharType>;
 
             static_assert (std::is_same_v<OsCharType, char8> || std::is_same_v<OsCharType, charW>,

@@ -12,7 +12,7 @@
 #define PTR                     *
 #define PTR_VAL(pointer)        (*pointer)
 
-namespace CIo
+namespace cio
 {
     using byte  = uint8_t;
 

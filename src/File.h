@@ -2,65 +2,45 @@
 #define FILE_H
 
 #include "UnsafeFile.h"
-namespace CIo
+namespace cio::Internal
 {
     //Final class that should safely encapsulate all necessary c File
     // functionality. All other classes should be provided as member types
     // acessible through BasicFile::ClassName
-    template<typename OsCharTypeArg>
-    class BasicFile : public BasicUnsafeFile<OsCharTypeArg>
+    template<typename Adapter, typename UnsafeFileArg = UnadaptedUnsafeFile<Adapter>>
+    class UnadaptedFile : public UnsafeFileArg
     {
         private:
-            using ThisType          = BasicFile;
+            using ThisType          = UnadaptedFile;
+            using OsCharType        = typename Adapter::CharType;
 
         public:
-            using UnsafeFile        = BasicUnsafeFile<OsCharTypeArg>;
+            using UnsafeFile        = UnsafeFileArg;
             using FileManager       = typename UnsafeFile::FileManager;
 
         public:
-            using Size              = typename UnsafeFile::Size;
-            using FileSize          = typename UnsafeFile::FileSize;
-            using Position          = typename UnsafeFile::Position;
-            using OriginPosition    = typename UnsafeFile::OriginPosition;
-            using BufferingCode     = typename UnsafeFile::BufferingCode;
-            using FileDescriptor    = typename UnsafeFile::FileDescriptor;
-            using Stats             = typename UnsafeFile::Stats;
+            using OpenMode      = BasicOpenMode<OsCharType>;
+            using OsString      = String<OsCharType>;
+            using OsStringView  = StringView<OsCharType>;
 
-            using OpenMode            = typename UnsafeFile::OpenMode;
-            using OpenModeFlag        = typename OpenMode::OpenModeFlag;
-            using WindowsOpenModeFlag = typename OpenMode::WindowsOpenModeFlag;
-            using COpenMode           = typename OpenMode::COpenMode;
-
-            template<typename CharType>
-            using String        = typename UnsafeFile:: template String<CharType>;
-            template<typename CharType>
-            using StringView    = typename UnsafeFile:: template StringView<CharType>;
-            template<typename CharType>
-            using CStringRef    = typename UnsafeFile:: template CStringRef<CharType>;
-
-            using OsCharType    = typename UnsafeFile::OsCharType;
-            using OsString      = typename UnsafeFile::OsString;
-            using OsStringView  = typename UnsafeFile::OsStringView;
-            using OsCStringRef  = typename UnsafeFile::OsCStringRef;
-
-            static_assert (CIo::CharSupport<OsCharType>::IsValid, "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
+            static_assert (CharSupport<OsCharType>::IsValid, "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
 
         public:
-            static constexpr Position ErrorPos = {-1};
+            static constexpr Position ErrorPos          = {-1};
 
         public:
-            BasicFile() = default;
-            BasicFile(const ThisType REF) = delete;
-            BasicFile(ThisType RVALUE_REF) = default;
+            UnadaptedFile() = default;
+            UnadaptedFile(const ThisType REF) = delete;
+            UnadaptedFile(ThisType RVALUE_REF) = default;
             ThisType REF operator=(const ThisType REF) = delete;
             ThisType REF operator=(ThisType RVALUE_REF) = default;
 
         public:
-            inline BasicFile(const OsStringView path, const OpenMode REF openMode) : UnsafeFile(path, openMode)
+            inline UnadaptedFile(const OsStringView path, const OpenMode REF openMode) : UnsafeFile(path, openMode)
             {}
             template<typename ... OpenModeTypes,
                      std::enable_if_t<OpenModeHelpers::AreOpenModeFlags<OpenModeTypes...>(), i32> = 0>
-            inline BasicFile(const OsStringView path, OpenModeTypes ... openModes) noexcept : UnsafeFile(path, openModes...)
+            inline UnadaptedFile(const OsStringView path, OpenModeTypes ... openModes) noexcept : UnsafeFile(path, openModes...)
             {}
 
         private:
@@ -73,7 +53,6 @@ namespace CIo
                 return static_cast<const UnsafeFile REF>(PTR_VAL(this));
             }
 
-
         public:
             bool WasEndOfFileRieched() const noexcept
             {
@@ -82,7 +61,6 @@ namespace CIo
 
                 return this->GetUnsafe().WasEndOfFileRieched();
             }
-
 
         public:
             Position GetPosInFile() noexcept
@@ -93,7 +71,7 @@ namespace CIo
                 return this->GetUnsafe().GetPosInFile();
             }
 
-            bool SetPosInFile(Position pos, OriginPosition from = OriginPosition::Beggining) noexcept
+            bool SetPosInFile(const Position pos, const Origin from = Origin::Beggining) noexcept
             {
                 if(this->IsClosed())
                     return false;
@@ -151,12 +129,12 @@ namespace CIo
             }
 
             template<typename CharT>
-            [[nodiscard]] bool ReadString(CStringRef<CharT> to) noexcept
+            [[nodiscard]] inline bool ReadString(String<CharT> REF output) noexcept
             {
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafe().ReadString(to);
+                return this->GetUnsafe().ReadString(output);
             }
 
 
@@ -198,7 +176,7 @@ namespace CIo
 
 
         public:
-            bool SetBuffer(void PTR bufferPtr, Size bufferSize, BufferingCode mode) noexcept
+            bool SetBuffer(void PTR bufferPtr, Size bufferSize, BufferingMode mode) noexcept
             {
                 if(this->IsClosed())
                     return false;
@@ -221,7 +199,7 @@ namespace CIo
             }
 
         public:
-            inline static bool GetFileStatics(Stats REF stats, const FileDescriptor descriptor) noexcept
+            inline static bool GetFileStatics(Stats REF stats, const ConstFileDescriptor descriptor) noexcept
             {
                 if(descriptor == FileDescriptor::ErrorDescriptor)
                     return false;
@@ -234,7 +212,7 @@ namespace CIo
                 return UnsafeFile::GetFileStatics(stats, filename);
             }
 
-            static FileSize GetFileSize(const FileDescriptor descriptor) noexcept
+            static FileSize GetFileSize(const ConstFileDescriptor descriptor) noexcept
             {
                 if(descriptor == FileDescriptor::ErrorDescriptor)
                     return UnsafeFile::ErrorSize;
@@ -249,6 +227,13 @@ namespace CIo
 
 
         public:
+            ConstFileDescriptor GetFileDescriptor() const noexcept
+            {
+                if(this->IsClosed())
+                    return ConstFileDescriptor();
+
+                return this->GetUnsafe().GetFileDescriptor();
+            }
             FileDescriptor GetFileDescriptor() noexcept
             {
                 if(this->IsClosed())
@@ -273,7 +258,11 @@ namespace CIo
                 return this->GetUnsafe().GetFileSize();
             }
     };
-
+}
+namespace cio
+{
+    template<typename CharType>
+    using BasicFile     = Internal::UnadaptedFile<CstdioAdapter<CharType>>;
     using File          = BasicFile<char8>;
     using WFile         = BasicFile<charW>;
 }

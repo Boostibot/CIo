@@ -10,8 +10,6 @@ INCLUDEPATH += \
 
 #User files
 HEADERS += \
-    ../src/AuxiliaryTypes.h \
-    ../src/CstdioAdapter.h \
         CIo/FileManager.h \
         CIo/FileManager_TestingUtilities.h \
         CIo/UseExamples.h \
@@ -32,14 +30,7 @@ HEADERS += \
         CIo/UnsafeFile_TestingUtilities.h \
         ../src/CharSupport.h \
         ../src/Common.h \
-        ../src/CompilerSupport.h \
-        ../src/ConstexprString.h \
-        ../src/File.h \
-        ../src/FileManager.h \
-        ../src/OpenMode.h \
-        ../src/UniversalString.h \
-        ../src/UnsafeFile.h \
-        ../src/UseExamples.h \
+        ../src/CompilerSupport.h
 
 SOURCES += \
 

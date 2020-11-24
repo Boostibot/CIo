@@ -3,7 +3,7 @@
 
 #include "File.h"
 
-namespace CIo::UseExamples
+namespace cio::UseExamples
 {
     //==============================================================================//
     //                                                                              //
@@ -14,9 +14,9 @@ namespace CIo::UseExamples
     //                                                                              //
     //==============================================================================//
 
-    inline bool WriteToFile(CIo::File::OsStringView path, const char data[], size_t dataSize) noexcept
+    inline bool WriteToFile(cio::File::OsStringView path, const char data[], size_t dataSize) noexcept
     {
-        using namespace CIo;
+        using namespace cio;
 
         constexpr File::OpenMode openMode(OpenModeFlag::Write, OpenModeFlag::Binary);
         static_assert (openMode.IsValid(), "Invalid arguments");
@@ -26,9 +26,9 @@ namespace CIo::UseExamples
         return file.Write(data, dataSize);
     }
 
-    inline bool AppendToFile(CIo::File::OsStringView path, const char data[], size_t dataSize) noexcept
+    inline bool AppendToFile(cio::File::OsStringView path, const char data[], size_t dataSize) noexcept
     {
-        using namespace CIo;
+        using namespace cio;
 
         constexpr File::OpenMode openMode(OpenModeFlag::Write, OpenModeFlag::Append, OpenModeFlag::Binary);
         static_assert (openMode.IsValid(), "Invalid arguments");
@@ -39,9 +39,9 @@ namespace CIo::UseExamples
     }
 
     template<typename Lambda>
-    bool ReadFileByChunks(CIo::File::OsStringView path, Lambda processChunk) noexcept
+    bool ReadFileByChunks(cio::File::OsStringView path, Lambda processChunk) noexcept
     {
-        using namespace CIo;
+        using namespace cio;
         constexpr size_t chunkSize = 4096;
 
         constexpr File::OpenMode openMode(OpenModeFlag::Read, OpenModeFlag::MustExist, OpenModeFlag::Binary);
@@ -50,7 +50,7 @@ namespace CIo::UseExamples
         File file(path, openMode);
         char chunk[chunkSize];
 
-        File::Size readSize;
+        Size readSize;
         while(true)
         {
             readSize = file.ReadAndCount(chunk, chunkSize);
@@ -61,20 +61,17 @@ namespace CIo::UseExamples
             processChunk(chunk, readSize);
         }
 
-        if(file.WasEndOfFileRieched())
-            return true;
-        else
-            return false;
+        return file.WasEndOfFileRieched();
     }
 
     //Detailed explanations:
     template<typename ProcessChunk, typename UpdateProgress>
-    bool ReadFileWithProgress(CIo::File::OsStringView path, ProcessChunk processChunk, UpdateProgress updateProgress) noexcept
+    bool ReadFileWithProgress(cio::File::OsStringView path, ProcessChunk processChunk, UpdateProgress updateProgress) noexcept
     {
         //Note that this function can be declared noexcept since all
         // functions in the File (BasicFile<>) class are noexcept
 
-        using namespace CIo;
+        using namespace cio;
         constexpr size_t chunkSize = 4096;
 
         //Create an open mode with the following flags
@@ -99,7 +96,7 @@ namespace CIo::UseExamples
 
         //We get the maximum position by moving to end and getting it
         file.MoveToEnd();
-        const File::Position maxPos = file.GetPosInFile();
+        const Position maxPos = file.GetPosInFile();
         //We restore the pos to the beggining afterwards
         file.MoveToBeggining();
 
@@ -110,7 +107,7 @@ namespace CIo::UseExamples
 
         //We read the file repeatedly by using the ReadAndCount function and saving
         // the read size to readOfChunk;
-        File::Size readSize;
+        Size readSize;
         while(true)
         {
             //We save the size read to be able to check it if the reading
@@ -147,9 +144,9 @@ namespace CIo::UseExamples
     }
 
     template<typename Lambda>
-    bool ReadFileFaster(CIo::File::OsStringView path, Lambda processChunk) noexcept
+    bool ReadFileFaster(cio::File::OsStringView path, Lambda processChunk) noexcept
     {
-        using namespace CIo;
+        using namespace cio;
         constexpr size_t chunkSize = 4096;
 
         constexpr File::OpenMode openMode(OpenModeFlag::Read, OpenModeFlag::Binary, OpenModeFlag::MustExist);
@@ -174,10 +171,10 @@ namespace CIo::UseExamples
 
         //We set the buffering to None
         // (in this case the first two parameters dont matter)
-        file.SetBuffer(nullptr, 0, File::BufferingCode::None);
+        file.SetBuffer(nullptr, 0, BufferingMode::None);
 
         //We read the file normally and process the data
-        File::Size readSize;
+        Size readSize;
         while(true)
         {
             readSize = file.ReadAndCount(chunk, chunkSize);
@@ -195,9 +192,9 @@ namespace CIo::UseExamples
     }
 
     template<typename Lambda>
-    inline bool ReadDoublesBackwards(CIo::File::OsStringView path, Lambda processUnit) noexcept
+    inline bool ReadDoublesBackwards(cio::File::OsStringView path, Lambda processUnit) noexcept
     {
-        using namespace CIo;
+        using namespace cio;
 
         constexpr File::OpenMode openMode(OpenModeFlag::Read, OpenModeFlag::Binary, OpenModeFlag::MustExist);
         static_assert (openMode.IsValid(), "Invalid arguments");
@@ -214,7 +211,7 @@ namespace CIo::UseExamples
 
         //We move negative (backwards) sizeof double to not
         // read past the file end
-        file.MoveBy(- static_cast<File::Position>(sizeof (unit)));
+        file.MoveBy(- static_cast<Position>(sizeof (unit)));
 
         //Both of the above functons can be fused into the following one:
         //file.SetPosInFile(- static_cast<File::SizeType>(chunkSize), File::OriginPosition::End);
@@ -233,7 +230,7 @@ namespace CIo::UseExamples
             // this is because the File::Read function automatically
             // moves after the read data
             // (this is cstdio restriction and can not be changed)
-            if(file.MoveBy(- static_cast<File::Position>(sizeof (unit)) * 2) == false)
+            if(file.MoveBy(- static_cast<Position>(sizeof (unit)) * 2) == false)
             {
                 //This function fails only when moving to position which would be
                 // negative (ie. before the start of the file)
@@ -246,9 +243,9 @@ namespace CIo::UseExamples
         return true;
     }
 
-    inline bool WriteFileUtfStrings(CIo::WFile::OsStringView path)
+    inline bool WriteFileUtfStrings(cio::WFile::OsStringView path)
     {
-        using namespace CIo;
+        using namespace cio;
 
 
         //When working with files in UTF there are few important things to note:
@@ -287,7 +284,7 @@ namespace CIo::UseExamples
         // - File::GetFileStatics(...) //Static overload version
         // - File::GetFileSize(...) //Static overload version
 
-        using namespace CIo;
+        using namespace cio;
         constexpr WFile::OpenMode openMode(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::Binary);
 
         //If we are on windows we can also use UnicodeEncoding flag which makes the file automatically skip the BOM mark

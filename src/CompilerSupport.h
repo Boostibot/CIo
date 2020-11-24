@@ -20,7 +20,7 @@
 
 #include "Common.h"
 
-namespace CIo::CompilerSupport
+namespace cio::CompilerSupport
 {
     inline auto fopen(const char8 * fileName, const char8 * arguments) noexcept
     {
