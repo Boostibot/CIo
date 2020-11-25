@@ -2,6 +2,7 @@
 C-style IO library
 
 A simple header only library created to ease use of classic cstdio and increase general safety through compile time logic.
+Windows only.
 
 # Motivation 
 
