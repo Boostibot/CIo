@@ -5,7 +5,7 @@
 #include "src/UnsafeFile.h"
 #include "FileManager_TestingUtilities.h"
 
-namespace CIo::UnsafeFileTesting
+namespace cio::UnsafeFileTesting
 {
     template<typename CharT>
     using BasicFilenameCleaner = FileManagerTesting::BasicFilenameCleaner<CharT>;

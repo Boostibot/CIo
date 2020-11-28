@@ -12,8 +12,14 @@ INCLUDEPATH += \
 HEADERS += \
     ../src/AuxiliaryTypes.h \
     ../src/CstdioAdapter.h \
+    ../src/File.h \
+    ../src/FileManager.h \
+    ../src/OpenMode.h \
+    ../src/OsSupport.h \
+    ../src/UnsafeFile.h \
         CIo/FileManager.h \
         CIo/FileManager_TestingUtilities.h \
+    CIo/Temp.h \
         CIo/UseExamples.h \
         CIo/ConstexprString.h \
         CIo/File.h \
@@ -30,15 +36,9 @@ HEADERS += \
         CIo/UnsafeFile_PositionFunctions.h \
         CIo/UnsafeFile_ReadingWritingFunctions.h \
         CIo/UnsafeFile_TestingUtilities.h \
-        ../src/CharSupport.h \
         ../src/Common.h \
-        ../src/CompilerSupport.h \
         ../src/ConstexprString.h \
-        ../src/File.h \
-        ../src/FileManager.h \
-        ../src/OpenMode.h \
         ../src/UniversalString.h \
-        ../src/UnsafeFile.h \
         ../src/UseExamples.h \
 
 SOURCES += \

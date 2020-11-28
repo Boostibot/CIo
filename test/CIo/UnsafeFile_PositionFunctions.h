@@ -3,7 +3,7 @@
 
 #include "UnsafeFile_TestingUtilities.h"
 
-namespace CIo::UnsafeFileTesting
+namespace cio::UnsafeFileTesting
 {
 
     TEMPLATE_TEST_CASE("[UnsafeFile] : GetPosInFile should return the current position in file", "[UnsafeFile][GetPosInFile]", UnsafeFileTestedTypes)

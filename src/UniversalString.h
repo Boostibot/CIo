@@ -4,57 +4,6 @@
 #include <string>
 #include <string_view>
 #include "Common.h"
-
-/*
-namespace cio
-{
-    //This class is ment as a input for string outputing or
-    // altering functions
-    // this is due to the fact that std::basic_string cannot point
-    // to statically allocated data and outputing to static buffers
-    // is often desired.
-    template<typename CharT>
-    struct CStringRef
-    {
-            using CharType = CharT;
-            using SizeType = size_t;
-            using ThisType = CStringRef;
-
-            const SizeType Size = {0};
-            CharType PTR const Data = {nullptr};
-
-            constexpr CStringRef(CharType PTR dataPtr, SizeType size) noexcept
-                : Size(size), Data(dataPtr)
-            {}
-
-            constexpr CStringRef(std::basic_string<CharType> REF str) noexcept
-                : Size(str.size()), Data(str.data())
-            {}
-
-            constexpr CStringRef() noexcept = default;
-            constexpr CStringRef(const ThisType REF) noexcept = default;
-            constexpr CStringRef(ThisType RVALUE_REF) noexcept = default;
-
-            constexpr operator std::basic_string_view<CharType>() const noexcept
-            {
-                return std::basic_string_view<CharType>(Data, Size);
-            }
-    };
-
-    template<typename CharType>
-    constexpr inline auto ToCStringRef(std::basic_string<CharType> REF arg) noexcept
-    {
-        return  CStringRef<CharType>(arg);
-    }
-
-    template<typename CharType>
-    constexpr inline auto ToCStringRef(CharType PTR dataPtr, typename CStringRef<CharType>::SizeType size) noexcept
-    {
-        return  CStringRef<CharType>(dataPtr, size);
-    }
-}
-*/
-
 namespace cio
 {
     using FalseType = std::false_type;
@@ -76,9 +25,6 @@ namespace cio
 
         template <typename T>
         struct GetStringClassTypeImpl<std::basic_string_view<T>> : TypeIdentity<T> {};
-
-        //template <typename T>
-        //struct GetStringClassTypeImpl<CStringRef<T>> : TypeIdentity<T> {};
     }
 
     //GetStringClassType
@@ -88,6 +34,12 @@ namespace cio
     template <typename T>
     using GetStringClassType_t = typename GetStringClassType<T>::type;
 
+    //IsCharType
+    template <typename T>
+    struct IsCharType : std::bool_constant<std::is_same_v<T, char8> || std::is_same_v<T, char16> || std::is_same_v<T, char32> || std::is_same_v<T, charW>>{};
+
+    template <typename T>
+    constexpr bool IsCharType_v{IsCharType<T>::value};
 
     //IsStringClass
     template <typename T>

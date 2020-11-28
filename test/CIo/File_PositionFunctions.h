@@ -4,7 +4,7 @@
 #include "File_TestingUtilities.h"
 
 
-namespace CIo::FileTesting
+namespace cio::FileTesting
 {
 
     TEMPLATE_TEST_CASE("[File] : GetPosInFile should return the current position in file", "[File][GetPosInFile]", FileTestedTypes)

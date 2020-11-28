@@ -6,13 +6,13 @@
 
 #define ConstexprStringTestedTypes char8, char16, char32, charW
 
-namespace CIo::ConstexprStringTesting
+namespace cio::ConstexprStringTesting
 {
     template<typename T>
     static constexpr T NullTermination {'\0'};
 }
 
-namespace CIo::ConstexprStringTesting
+namespace cio::ConstexprStringTesting
 {
     TEMPLATE_TEST_CASE("[ConstexprString] : ConstexprString should be compilable (and constructible) with all sizes", "[ConstexprString][Compilation]", ConstexprStringTestedTypes)
     {

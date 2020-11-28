@@ -3,7 +3,7 @@
 
 #include "UnsafeFile_TestingUtilities.h"
 
-namespace CIo::UnsafeFileTesting
+namespace cio::UnsafeFileTesting
 {
 
     TEMPLATE_TEST_CASE("[UnsafeFile] : Read should read data from the file", "[UnsafeFile][Read]", UnsafeFileTestedTypes)

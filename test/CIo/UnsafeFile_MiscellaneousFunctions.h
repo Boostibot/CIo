@@ -3,7 +3,7 @@
 
 #include "UnsafeFile_TestingUtilities.h"
 
-namespace CIo::UnsafeFileTesting
+namespace cio::UnsafeFileTesting
 {
     TEMPLATE_TEST_CASE("[UnsafeFile] : SetBuffer should set the buffer", "[UnsafeFile][SetBuffer]", UnsafeFileTestedTypes)
     {

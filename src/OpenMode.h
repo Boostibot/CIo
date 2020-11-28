@@ -1,4 +1,4 @@
-#ifndef NEWOPENMODE_H
+﻿#ifndef NEWOPENMODE_H
 #define NEWOPENMODE_H
 
 #include "AuxiliaryTypes.h"
@@ -6,44 +6,45 @@
 
 namespace cio
 {
-    namespace Meta
-    {
-        enum class Indetifier : u8 {Indentify};
-
-        template<Indetifier identifier>
-        constexpr static bool AndInternal()
-        {
-            return true;
-        }
-        template<Indetifier identifier, typename FirstType, typename ... OtherArgumentTypes>
-        constexpr static bool AndInternal(FirstType firstValue, OtherArgumentTypes... values)
-        {
-            return firstValue && AndInternal<identifier>(values...);
-        }
-        template<typename ... ArgumentTypes>
-        constexpr bool And(ArgumentTypes... values)
-        {
-            return AndInternal<Indetifier::Indentify, ArgumentTypes...>(values...);
-        }
-    }
-
     namespace  OpenModeHelpers
     {
-        using OpenModeEnumsBaseType = u8;
+        using EnumBaseType = u8;
+
+        namespace Meta
+        {
+            enum class Indetifier : u8 {Indentify};
+
+            template<Indetifier identifier>
+            constexpr static bool AndInternal()
+            {
+                return true;
+            }
+            template<Indetifier identifier, typename FirstType, typename ... OtherArgumentTypes>
+            constexpr static bool AndInternal(FirstType firstValue, OtherArgumentTypes... values)
+            {
+                return firstValue && AndInternal<identifier>(values...);
+            }
+
+            template<typename ... ArgumentTypes>
+            constexpr bool And(ArgumentTypes... values)
+            {
+                return AndInternal<Indetifier::Indentify, ArgumentTypes...>(values...);
+            }
+        }
     }
 
     //These are all of the open mode flags necessary to represent all
     // c standard compilant open mode strings
-    enum class OpenModeFlag : OpenModeHelpers::OpenModeEnumsBaseType
+    enum class OpenModeFlag : OpenModeHelpers::EnumBaseType
     {
         Read,
         Write,
-        Append,
-        MustExist,
+        Create,
+        Override,
+        MustNotExist,
+        StartAtEnd,
 
-        Binary,
-        MustNotExist
-
+        Translated,
 
         //***************************************//
         //    OpenModeFlagsCount needs to be     //
@@ -54,7 +55,7 @@ namespace cio
     };
     //These are all of the open mode flags necessary to represent all
     // visual c++ additional open mode symbols
-    enum class WindowsOpenModeFlag : OpenModeHelpers::OpenModeEnumsBaseType
+    enum class WindowsOpenModeFlag : OpenModeHelpers::EnumBaseType
     {
         Text,
 
@@ -82,28 +83,29 @@ namespace cio
         //This is to not bother the user with the count option
     };
     //These are all of the basic modes supported by fopen
-    enum class COpenMode : OpenModeHelpers::OpenModeEnumsBaseType
+    enum class COpenMode : OpenModeHelpers::EnumBaseType
     {
-        ReadMustExist,      //Read && MustExist
-        Write,              //Write
-        WriteAppend,        //Write && Append
-        ReadWriteMustExist, //Read && Write && MustExist
-        ReadWrite,          //Read && Write
-        ReadWriteAppend     //Read && Write && Append
+        Read,           //Read && MustExist
+        Write,          //Write
+        Append,         //Write && Append
+        ReadExtended,   //Read && Write && MustExist
+        WriteExtended,  //Read && Write
+        AppendExtended  //Read && Write && Append
+    };
+
+    enum class EnabledActions: OpenModeHelpers::EnumBaseType
+    {
+        None,
+        Read,
+        Write,
+        ReadWrite,
+        Closed
     };
 
     namespace  OpenModeHelpers
     {
-            static constexpr OpenModeEnumsBaseType OpenModeFlagsCount = 6;
-            static constexpr OpenModeEnumsBaseType WindowsOpenModeFlagsCount = 11;
-
-            enum class OpenModeValidity : OpenModeEnumsBaseType
-            {
-                Valid,              //Arguemnts are valid
-                Invalid,            //Arguments are invalid. ie. both Read and Write are missing
-                Unsupported,        //Arguments that cannot be parsed due to fopen argument limitations
-                                    // ie. all combinations containing Append && MustExist
-            };
+            static constexpr EnumBaseType OpenModeFlagsCount = 7;
+            static constexpr EnumBaseType WindowsOpenModeFlagsCount = 11;
 
             template <typename FlagType>
             constexpr bool IsTypeOpenModeFlag()
@@ -121,7 +123,7 @@ namespace cio
             {
                 public:
                     using ThisType = FlagPresence;
-                    using Underlying = OpenModeEnumsBaseType;
+                    using Underlying = EnumBaseType;
 
                 public:
                     static constexpr Underlying WindowsFlagsOffset = OpenModeFlagsCount;
@@ -194,13 +196,23 @@ namespace cio
                     }
             };
 
+            struct RequiredActions
+            {
+                    bool MustExist    = false;
+                    bool MustNotExist = false;
+                    bool Create       = false;
+                    bool Delete       = false;
+                    bool StartAtEnd   = false;
+            };
+
             template<typename OsCharT>
-            class OpenModeConversionState
+            class ConversionState
             {
                 public:
-                    using ThisType = OpenModeConversionState;
+                    using ThisType = ConversionState;
 
                 public:
+                    using EnumBase = EnumBaseType;
                     static constexpr u32 OpenModeMaxChars = 26;
                     using OsCharType = OsCharT;
 
@@ -214,16 +226,17 @@ namespace cio
 
                 public:
                     template<typename ... FlagTypes>
-                    constexpr OpenModeConversionState(const FlagTypes ... flags) : Presence(flags...)
+                    constexpr ConversionState(const FlagTypes ... flags) noexcept : Presence(flags...)
                     {}
 
                 public:
                     constexpr bool AreFlagsConflicting() const noexcept
                     {
-                        if(Presence[OpenModeFlag::MustExist] && Presence[OpenModeFlag::MustNotExist])
+
+                        if(NOT Presence[OpenModeFlag::Create] && Presence[OpenModeFlag::MustNotExist])
                             return true;
 
-                        if(Presence[WindowsOpenModeFlag::Text] && Presence[OpenModeFlag::Binary])
+                        if(Presence[WindowsOpenModeFlag::Text] && NOT Presence[OpenModeFlag::Translated])
                             return true;
 
                         if(Presence[WindowsOpenModeFlag::CommitDirectlyToDisk] && Presence[WindowsOpenModeFlag::CommitIndirectlyToDisk])
@@ -245,65 +258,150 @@ namespace cio
                         return false;
                     }
 
-                    constexpr void SetCOpenModeAndValidty(COpenMode REF mode, OpenModeValidity REF validity) const noexcept
+                    constexpr void GetCopenModeAndRequiredActions(COpenMode REF cmode, RequiredActions REF required) const noexcept
                     {
-                        const bool read         = Presence[OpenModeFlag::Read];
-                        const bool write        = Presence[OpenModeFlag::Write];
-                        const bool append       = Presence[OpenModeFlag::Append];
-                        const bool mustExist    = Presence[OpenModeFlag::MustExist];
-
-                        auto setValidity = [REF mode, REF validity](OpenModeValidity _validity)
-                        {
-                            validity = _validity;
-                            mode = COpenMode::ReadWrite;
-                        };
-                        auto setMode = [REF mode, REF validity](COpenMode _mode)
-                        {
-                            validity = OpenModeValidity::Valid;
-                            mode = _mode;
-                        };
+                        const bool Read         = Presence[OpenModeFlag::Read];
+                        const bool Write        = Presence[OpenModeFlag::Write];
+                        const bool Create       = Presence[OpenModeFlag::Create];
+                        const bool Override     = Presence[OpenModeFlag::Override];
+                        const bool MustNotExist = Presence[OpenModeFlag::MustNotExist];
+                        const bool StartAtEnd   = Presence[OpenModeFlag::StartAtEnd];
 
                         struct Helper
                         {
-                                static constexpr u32 Binary(u8 a, u8 b, u8 c, u8 d) {return 8*a + 4*b + 2*c + 1*d;}
+                                static constexpr u32 Binary(EnumBase a, EnumBase b, EnumBase c) {return 4*a + 2*b + 1*c;}
                         };
 
-                        switch (Helper::Binary(read, write, append, mustExist))
+                        auto set = [&](COpenMode to, bool must = false, bool mustNot = false, bool create = false, bool del = false)
                         {
-                            //                  R  W  A  M
-                            case Helper::Binary(0, 0, 0, 0): setValidity(OpenModeValidity::Invalid); break;
-                            case Helper::Binary(0, 0, 0, 1): setValidity(OpenModeValidity::Invalid); break;
-                            case Helper::Binary(0, 0, 1, 0): setValidity(OpenModeValidity::Invalid); break;
-                            case Helper::Binary(0, 0, 1, 1): setValidity(OpenModeValidity::Invalid); break;
-                            case Helper::Binary(0, 1, 0, 0): setMode(COpenMode::Write); break;
-                            case Helper::Binary(0, 1, 0, 1): setMode(COpenMode::ReadWriteMustExist); break;
-                            case Helper::Binary(0, 1, 1, 0): setMode(COpenMode::WriteAppend); break;
-                            case Helper::Binary(0, 1, 1, 1): setValidity(OpenModeValidity::Unsupported); break;
-                            case Helper::Binary(1, 0, 0, 0): setMode(COpenMode::ReadWrite); break;
-                            case Helper::Binary(1, 0, 0, 1): setMode(COpenMode::ReadMustExist); break;
-                            case Helper::Binary(1, 0, 1, 0): setMode(COpenMode::ReadWriteAppend); break;
-                            case Helper::Binary(1, 0, 1, 1): setValidity(OpenModeValidity::Unsupported); break;
-                            case Helper::Binary(1, 1, 0, 0): setMode(COpenMode::ReadWrite); break;
-                            case Helper::Binary(1, 1, 0, 1): setMode(COpenMode::ReadWriteMustExist); break;
-                            case Helper::Binary(1, 1, 1, 0): setMode(COpenMode::ReadWriteAppend); break;
-                            case Helper::Binary(1, 1, 1, 1): setValidity(OpenModeValidity::Unsupported); break;
 
-                            default: setValidity(OpenModeValidity::Invalid); break;
+                            cmode = to;
+                            required.MustExist = must;
+                            required.MustNotExist = mustNot;
+                            required.Create = create;
+                            required.Delete = del;
+                        };
+
+#ifdef SIMPLE_OPENMODE_CREATION
+                        switch (Helper::Binary(Create, Override, MustNotExist))
+                        {
+                            //                  C  O  N                                M  N  C  D
+                            case Helper::Binary(0, 0, 0): set(COpenMode::ReadExtended, 1, 0, 0, 0);
+                            case Helper::Binary(0, 0, 1): set(COpenMode::ReadExtended, 1, 1, 0, 0); //Error
+                            case Helper::Binary(0, 1, 0): set(COpenMode::ReadExtended, 1, 0, 1, 1);
+                            case Helper::Binary(0, 1, 1): set(COpenMode::ReadExtended, 1, 1, 0, 0); //Error
+                            case Helper::Binary(1, 0, 0): set(COpenMode::ReadExtended, 0, 0, 1, 0);
+                            case Helper::Binary(1, 0, 1): set(COpenMode::ReadExtended, 0, 1, 1, 0);
+                            case Helper::Binary(1, 1, 0): set(COpenMode::ReadExtended, 0, 0, 1, 0);
+                            case Helper::Binary(1, 1, 1): set(COpenMode::ReadExtended, 0, 1, 1, 1);
                         }
 
+
+#else
+                        //Best matching permissions - Only two cases where permissions require exeptions
+                        if(Write && Read)
+                        {
+                            switch (Helper::Binary(Create, Override, MustNotExist))
+                            {
+                                //                  C  O  N                                 M  N  C  D
+                                case Helper::Binary(0, 0, 0): set(COpenMode::ReadExtended,  1, 0, 0, 0); break;
+                                case Helper::Binary(0, 0, 1): set(COpenMode::Read,          1, 1, 0, 0); break; //Error
+                                case Helper::Binary(0, 1, 0): set(COpenMode::WriteExtended, 1, 0, 0, 0); break;
+                                case Helper::Binary(0, 1, 1): set(COpenMode::Read,          1, 1, 0, 0); break; //Error
+                                case Helper::Binary(1, 0, 0): set(COpenMode::ReadExtended,  0, 0, 1, 0); break;
+                                case Helper::Binary(1, 0, 1): set(COpenMode::WriteExtended, 0, 1, 1, 0); break;
+                                case Helper::Binary(1, 1, 0): set(COpenMode::WriteExtended, 0, 0, 1, 1); break;
+                                case Helper::Binary(1, 1, 1): set(COpenMode::WriteExtended, 0, 1, 1, 1); break;
+                            }
+                        }
+                        else if(Write)
+                        {
+                            switch (Helper::Binary(Create, Override, MustNotExist))
+                            {
+                                //                  C  O  N                                 M  N  C  D
+                                case Helper::Binary(0, 0, 0): set(COpenMode::ReadExtended,  1, 0, 0, 0); break; //UNMATCHING PERMISSIONS
+                                case Helper::Binary(0, 0, 1): set(COpenMode::Read,          1, 1, 0, 0); break; //Error
+                                case Helper::Binary(0, 1, 0): set(COpenMode::Write,         1, 0, 0, 0); break;
+                                case Helper::Binary(0, 1, 1): set(COpenMode::Read,          1, 1, 0, 0); break; //Error
+                                case Helper::Binary(1, 0, 0): set(COpenMode::ReadExtended,  0, 0, 1, 0); break; //UNMATCHING PERMISSIONS
+                                case Helper::Binary(1, 0, 1): set(COpenMode::Write,         0, 1, 1, 0); break;
+                                case Helper::Binary(1, 1, 0): set(COpenMode::Write,         0, 0, 1, 0); break;
+                                case Helper::Binary(1, 1, 1): set(COpenMode::Write,         0, 1, 1, 1); break;
+                            }
+                        }
+                        else
+                        {
+                            switch (Helper::Binary(Create, Override, MustNotExist))
+                            {
+                                //                  C  O  N                        M  N  C  D
+                                case Helper::Binary(0, 0, 0): set(COpenMode::Read, 0, 0, 0, 0); break;
+                                case Helper::Binary(0, 0, 1): set(COpenMode::Read, 1, 1, 0, 0); break; //Error
+                                case Helper::Binary(0, 1, 0): set(COpenMode::Read, 1, 0, 1, 1); break;
+                                case Helper::Binary(0, 1, 1): set(COpenMode::Read, 1, 1, 0, 0); break; //Error
+                                case Helper::Binary(1, 0, 0): set(COpenMode::Read, 0, 0, 1, 0); break;
+                                case Helper::Binary(1, 0, 1): set(COpenMode::Read, 0, 1, 1, 0); break;
+                                case Helper::Binary(1, 1, 0): set(COpenMode::Read, 0, 0, 1, 0); break;
+                                case Helper::Binary(1, 1, 1): set(COpenMode::Read, 0, 1, 1, 1); break;
+                            }
+                        }
+#endif
+
+                        if(StartAtEnd)
+                            required.StartAtEnd = true;
+                    }
+
+                    constexpr EnabledActions GetEnabledActions() const noexcept
+                    {
+                        const bool read         = Presence[OpenModeFlag::Read];
+                        const bool write        = Presence[OpenModeFlag::Write];
+
+                        if(read && write)
+                            return EnabledActions::ReadWrite;
+                        if(read)
+                            return EnabledActions::Read;
+                        if(write)
+                            return EnabledActions::Write;
+
+                        return EnabledActions::None;
+                    }
+
+                    constexpr static RequiredActions GetCOpenRequiredActions(const COpenMode mode) noexcept
+                    {
+                        if(mode == COpenMode::ReadExtended)
+                        {
+                            RequiredActions required;
+                            required.MustExist = true;
+                            return required;
+                        }
+                        else
+                            return RequiredActions();
+                    }
+
+                    constexpr static EnabledActions GetCOpenEnabledActions(const COpenMode mode) noexcept
+                    {
+                        switch(mode)
+                        {
+                            case COpenMode::Read:           return EnabledActions::Read;
+                            case COpenMode::Write:          return EnabledActions::Write;
+                            case COpenMode::Append:         return EnabledActions::Write;
+                            case COpenMode::ReadExtended:   return EnabledActions::ReadWrite;
+                            case COpenMode::WriteExtended:  return EnabledActions::ReadWrite;
+                            case COpenMode::AppendExtended: return EnabledActions::ReadWrite;
+                            default:                        return EnabledActions::None;
+                        }
                     }
 
                     constexpr static OpenModeString GetCOpenModeStr(const COpenMode mode) noexcept
                     {
                         switch(mode)
                         {
-                            case COpenMode::ReadMustExist:      return ToModeString("r");
-                            case COpenMode::Write:              return ToModeString("w");
-                            case COpenMode::WriteAppend:        return ToModeString("a");
-                            case COpenMode::ReadWriteMustExist: return ToModeString("r+");
-                            case COpenMode::ReadWrite:          return ToModeString("w+");
-                            case COpenMode::ReadWriteAppend:    return ToModeString("a+");
-                            default:                            return ToModeString("i!");
+                            case COpenMode::Read:           return ToModeString("r");
+                            case COpenMode::Write:          return ToModeString("w");
+                            case COpenMode::Append:         return ToModeString("a");
+                            case COpenMode::ReadExtended:   return ToModeString("r+");
+                            case COpenMode::WriteExtended:  return ToModeString("w+");
+                            case COpenMode::AppendExtended: return ToModeString("a+");
+                            default:                        return ToModeString("i!");
                         }
                     }
 
@@ -311,9 +409,9 @@ namespace cio
                     {
                         OpenModeString additionalModeStr;
 
-                        if(Presence[OpenModeFlag::Binary])                            additionalModeStr += ToModeString("b");
+                        if(NOT Presence[OpenModeFlag::Translated])                    additionalModeStr += ToModeString("b");
                         if(Presence[WindowsOpenModeFlag::Text])                       additionalModeStr += ToModeString("t"); //Text needs to be in place of binary
-                        if(Presence[OpenModeFlag::MustNotExist])                      additionalModeStr += ToModeString("x");
+                        //if(Presence[OpenModeFlag::MustNotExist])                      additionalModeStr += ToModeString("x"); //Is checked through required actions
                         if(Presence[WindowsOpenModeFlag::CommitDirectlyToDisk])       additionalModeStr += ToModeString("c");
                         if(Presence[WindowsOpenModeFlag::CommitIndirectlyToDisk])     additionalModeStr += ToModeString("n");
                         if(Presence[WindowsOpenModeFlag::NotInheritedByChildProcess]) additionalModeStr += ToModeString("N");
@@ -329,11 +427,12 @@ namespace cio
                     }
 
                 private:
-                    constexpr static OpenModeString ToModeString(const char8 * text)
+                    constexpr static OpenModeString ToModeString(const char8 * text) noexcept
                     {
                         return PromoteStringCharsTo<OsCharType>(ConstexprString<char8>(text));
                     }
             };
+
     };
 
     //Class responsible for transforming Open mode flags into
@@ -345,114 +444,93 @@ namespace cio
             using ThisType = BasicOpenMode;
 
         private:
-            using OpenModeConversionState = OpenModeHelpers::OpenModeConversionState<OsCharT>;
-            using OpenModeValidity        = OpenModeHelpers::OpenModeValidity;
+            using ConversionState         = OpenModeHelpers::ConversionState<OsCharT>;
 
         public:
-            using OpenModeEnumsBaseType   = OpenModeHelpers::OpenModeEnumsBaseType;
+            using EnabledActions          = EnabledActions;
+            using RequiredActions         = OpenModeHelpers::RequiredActions;
+            using EnumBaseType            = OpenModeHelpers::EnumBaseType;
             using OpenModeFlag            = OpenModeFlag;
             using WindowsOpenModeFlag     = WindowsOpenModeFlag;
             using COpenMode               = COpenMode;
 
         public:
-            using OsCharType              = typename OpenModeConversionState::OsCharType;
+            using OsCharType              = typename ConversionState::OsCharType;
             template<typename CharT>
-            using ConstexprString         = typename OpenModeConversionState::template ConstexprString<CharT>;
-            using OpenModeString          = typename OpenModeConversionState::OpenModeString;
+            using ConstexprString         = typename ConversionState::template ConstexprString<CharT>;
+            using OpenModeString          = typename ConversionState::OpenModeString;
             using OsStringView            = StringView<OsCharType>;
 
-            static_assert (std::is_same_v<OsCharType, char8> || std::is_same_v<OsCharType, charW>,
-                           "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
-
         private:
-            static constexpr COpenMode DefaultCOpenMode = COpenMode::ReadWrite;
-            static constexpr OpenModeValidity DefaultOpenModeValidity = OpenModeValidity::Invalid;
+            bool             Valid       = {false};
+            COpenMode        CMode       = {COpenMode::ReadExtended};
+            EnabledActions   Enabled     = {EnabledActions::Closed};
+            RequiredActions  Required    = {RequiredActions()};
+            OpenModeString   OpenModeStr = {OpenModeString()};
 
         public:
-            OpenModeString   OpenModeStr;
-            COpenMode        CMode;
-            OpenModeValidity Validity;
-
-        public:
-            constexpr BasicOpenMode() noexcept
-                : OpenModeStr(), CMode(DefaultCOpenMode), Validity(DefaultOpenModeValidity)
-            {}
-
-            constexpr BasicOpenMode(COpenMode openMode) noexcept
-                : OpenModeStr(), CMode(DefaultCOpenMode), Validity(DefaultOpenModeValidity)
-            {
-                AssignCOpenMode(openMode);
-            }
-
-        public:
+            constexpr BasicOpenMode() noexcept = default;
             constexpr BasicOpenMode(const ThisType REF other) = default;
             constexpr BasicOpenMode(ThisType RVALUE_REF other) = default;
 
             constexpr ThisType REF operator=(const ThisType REF) = default;
             constexpr ThisType REF operator=(ThisType RVALUE_REF) = default;
 
+        public:
+            constexpr BasicOpenMode(COpenMode cOpenMode) noexcept
+                //: OpenModeStr(), Valid(), Enabled(), Required()
+            {
+                AssignCOpenMode(cOpenMode);
+            }
+
             template<typename ... FlagTypes,
                      std::enable_if_t<OpenModeHelpers::AreOpenModeFlags<FlagTypes...>(), u32> = 0>
             constexpr BasicOpenMode(FlagTypes ... flags) noexcept
-                : OpenModeStr(), CMode(), Validity()
+                //: OpenModeStr(), Valid(), Enabled(), Required()
             {
-                this->operator =(CreateOpenMode<FlagTypes ...>(flags...));
+                AssignOpenMode(flags...);
             }
 
-            constexpr void AssignCOpenMode(COpenMode cOpenMode) noexcept
-            {
-                this->CMode = cOpenMode;
-                this->Validity = OpenModeValidity::Valid;
-                this->OpenModeStr = OpenModeConversionState::GetCOpenModeStr(cOpenMode);
-            }
+            inline constexpr bool IsValid()             const noexcept {return Valid;}
 
-
-            inline constexpr bool IsValid()     const noexcept {return IsValid(this->Validity);}
-            inline constexpr bool IsSupported() const noexcept {return IsSupported(this->Validity);}
-
-            inline constexpr auto GetOpenModeString() const noexcept
-            {
-                if(IsValid())
-                    return OpenModeStr;
-                else
-                    return OpenModeString();
-            }
-
-            inline constexpr auto GetCOpenMode() const noexcept
-            {
-                return this->CMode;
-            }
+            inline constexpr auto GetOpenModeString()   const noexcept {return OpenModeStr;}
+            inline constexpr auto GetCOpenMode()        const noexcept {return CMode;}
+            inline constexpr auto GetEnabledActions()   const noexcept {return Enabled;}
+            inline constexpr auto GetRequiredActions()  const noexcept {return Required;}
 
             inline constexpr operator OsStringView() const noexcept
             {
                 return OpenModeStr.operator std::basic_string_view<OsCharType>();
             }
 
+
         private:
-            static constexpr bool IsValid(OpenModeValidity validity)        noexcept {return validity == OpenModeValidity::Valid;}
-            static constexpr bool IsSupported(OpenModeValidity validity)    noexcept {return NOT(validity == OpenModeValidity::Unsupported);}
-
-            template<typename ... FlagTypes>
-            static constexpr ThisType CreateOpenMode(FlagTypes ... flags) noexcept
+            constexpr void AssignCOpenMode(COpenMode cOpenMode) noexcept
             {
-                static_assert (OpenModeHelpers::AreOpenModeFlags<FlagTypes...>(),
-                        "BasicOpenMode::CreateOpenMode : All provided flags must be of type OpenModeFlag");
-
-                OpenModeConversionState state(flags...);
-                ThisType openMode;
-
-                if(state.AreFlagsConflicting())
-                    return openMode;
-
-                state.SetCOpenModeAndValidty(openMode.CMode, openMode.Validity);
-
-                if(NOT openMode.IsValid())
-                    return openMode;
-
-                openMode.OpenModeStr += state.GetCOpenModeStr(openMode.CMode);
-                openMode.OpenModeStr += state.GetAdditionalModeStr();
-                return openMode;
+                CMode = cOpenMode;
+                Valid = true;
+                Required = ConversionState::GetCOpenRequiredActions(cOpenMode);
+                Enabled = ConversionState::GetCOpenEnabledActions(cOpenMode);
+                OpenModeStr = ConversionState::GetCOpenModeStr(cOpenMode);
             }
+            template<typename ... FlagTypes>
+            constexpr void AssignOpenMode(FlagTypes ... flags) noexcept
+            {
+                const ConversionState state(flags...);
+
+                Valid = NOT state.AreFlagsConflicting();
+
+                if(NOT IsValid())
+                    return;
+
+                Enabled = state.GetEnabledActions();
+                state.GetCopenModeAndRequiredActions(CMode, Required);
+
+                OpenModeStr += state.GetCOpenModeStr(CMode);
+                OpenModeStr += state.GetAdditionalModeStr();
+                return;
+            }
+
     };
 
     using OpenMode = BasicOpenMode<char8>;

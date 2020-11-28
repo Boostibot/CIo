@@ -3,7 +3,7 @@
 
 #include "File_TestingUtilities.h"
 
-namespace CIo::FileTesting
+namespace cio::FileTesting
 {
 
     TEMPLATE_TEST_CASE("[File] : Read should read data from the file", "[File][Read]", FileTestedTypes)

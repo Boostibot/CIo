@@ -3,7 +3,7 @@
 
 #include "File_TestingUtilities.h"
 
-namespace CIo::FileTesting
+namespace cio::FileTesting
 {
     TEMPLATE_TEST_CASE("[File] : SetBuffer should set the buffer", "[File][SetBuffer]", FileTestedTypes)
     {

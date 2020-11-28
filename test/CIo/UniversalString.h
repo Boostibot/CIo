@@ -4,7 +4,8 @@
 #include "Catch2/Catch.hpp"
 #include "src/UniversalString.h"
 
-namespace CIo::CStringRefTesting
+/*
+namespace cio::CStringRefTesting
 {
     #define CStringRefTestedTypes char8, charW, char16, char32, int, long, double
 
@@ -291,8 +292,8 @@ namespace CIo::CStringRefTesting
         }
     }
 }
-
-namespace CIo::UniversalStringTesting
+*/
+namespace cio::UniversalStringTesting
 {
     template< typename ... T>
     struct TestingStruct;
@@ -316,10 +317,10 @@ namespace CIo::UniversalStringTesting
         static_assert (std::is_same_v<typename GetStringClassType<const volatile std::basic_string_view<charW> REF>::type,  charW>, "");
         static_assert (std::is_same_v<typename GetStringClassType<const std::basic_string_view<int>>::type,                 int>, "");
 
-        static_assert (std::is_same_v<typename GetStringClassType<CStringRef<char8>>::type,                                 char8>, "");
-        static_assert (std::is_same_v<typename GetStringClassType<const volatile  CStringRef<char16>>::type,                char16>, "");
-        static_assert (std::is_same_v<typename GetStringClassType<CStringRef<char32> REF>::type,                            char32>, "");
-        static_assert (std::is_same_v<typename GetStringClassType<const CStringRef<charW>>::type,                           charW>, "");
+        //static_assert (std::is_same_v<typename GetStringClassType<CStringRef<char8>>::type,                                 char8>, "");
+        //static_assert (std::is_same_v<typename GetStringClassType<const volatile  CStringRef<char16>>::type,                char16>, "");
+        //static_assert (std::is_same_v<typename GetStringClassType<CStringRef<char32> REF>::type,                            char32>, "");
+        //static_assert (std::is_same_v<typename GetStringClassType<const CStringRef<charW>>::type,                           charW>, "");
 
         static_assert (std::is_same_v<typename GetStringClassType<volatile int>::type,                                      FalseType>, "");
         static_assert (std::is_same_v<typename GetStringClassType<double REF>::type,                                        FalseType>, "");
@@ -357,10 +358,10 @@ namespace CIo::UniversalStringTesting
         static_assert (IsStringClass<std::basic_string_view<char32>>::value, "");
         static_assert (IsStringClass<std::basic_string_view<charW>>::value, "");
 
-        static_assert (IsStringClass<CStringRef<char8>>::value, "");
-        static_assert (IsStringClass<CStringRef<char16>>::value, "");
-        static_assert (IsStringClass<CStringRef<char32>>::value, "");
-        static_assert (IsStringClass<CStringRef<charW>>::value, "");
+        //static_assert (IsStringClass<CStringRef<char8>>::value, "");
+        //static_assert (IsStringClass<CStringRef<char16>>::value, "");
+        //static_assert (IsStringClass<CStringRef<char32>>::value, "");
+        //static_assert (IsStringClass<CStringRef<charW>>::value, "");
 
         static_assert (NOT IsStringClass<const int>::value, "");
         static_assert (NOT IsStringClass<const volatile double>::value, "");

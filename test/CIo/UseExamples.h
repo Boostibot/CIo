@@ -7,7 +7,7 @@
 #include "src/UseExamples.h"
 #include "File_TestingUtilities.h"
 
-namespace CIo::UseExamples::Testing
+namespace cio::UseExamples::Testing
 {
     template<typename CharT>
     using BasicFilenameCleaner = FileManagerTesting::BasicFilenameCleaner<CharT>;
@@ -16,7 +16,7 @@ namespace CIo::UseExamples::Testing
     using WFilenameCleaner = BasicFilenameCleaner<charW>;
 }
 
-namespace CIo::UseExamples::Testing
+namespace cio::UseExamples::Testing
 {
     TEST_CASE("[UseExamples] : WriteToFile shoudl write to the file all of data provided", "[UseExamples][WriteToFile]")
     {

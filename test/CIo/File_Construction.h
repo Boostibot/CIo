@@ -3,7 +3,7 @@
 
 #include "File_TestingUtilities.h"
 
-namespace CIo::FileTesting
+namespace cio::FileTesting
 {
     TEST_CASE("[File] : Only char and wchar_t specialisations should compile", "[File][Compilation]")
     {

@@ -3,7 +3,7 @@
 
 #include "FileManager_TestingUtilities.h"
 
-namespace CIo::FileManagerTesting
+namespace cio::FileManagerTesting
 {
     TEST_CASE("[BasicFileManager] : Only char8 amd charW (char and wchar_t) specialisations should compile", "[BasicFileManager][Compilation]")
     {

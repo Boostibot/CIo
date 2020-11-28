@@ -4,7 +4,7 @@
 #include "Catch2/Catch.hpp"
 #include "src/FileManager.h"
 
-namespace CIo::FileManagerTesting
+namespace cio::FileManagerTesting
 {
     template<typename CharT, size_t CharsMax = L_tmpnam>
     struct BasicFilenameCleaner
@@ -50,7 +50,7 @@ namespace CIo::FileManagerTesting
 #define FileManager_TEST_COMPILE_ERROR false
 #define FileManagerTestedTypes char8, charW
 
-namespace CIo::FileManagerTesting::FilenameCleanerTesting
+namespace cio::FileManagerTesting::FilenameCleanerTesting
 {
     TEMPLATE_TEST_CASE("[FilenameCleaner] : Constructor should create a unique filename", "[FilenameCleaner][Constructor]", FileManagerTestedTypes)
     {

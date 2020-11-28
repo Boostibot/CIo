@@ -23,10 +23,8 @@ namespace cio::Internal
             using OsString      = String<OsCharType>;
             using OsStringView  = StringView<OsCharType>;
 
-            static_assert (CharSupport<OsCharType>::IsValid, "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
-
         public:
-            static constexpr Position ErrorPos          = {-1};
+            static constexpr Offset ErrorPos          = {-1};
 
         public:
             UnadaptedFile() = default;
@@ -63,78 +61,121 @@ namespace cio::Internal
             }
 
         public:
-            Position GetPosInFile() noexcept
+            inline Position GetPos() const noexcept //ftell
             {
-                if(this->IsClosed())
-                    return ThisType::ErrorPos;
-
-                return this->GetUnsafe().GetPosInFile();
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed: return Position();
+                    default:                     return GetUnsafe().GetPos();
+                }
             }
 
-            bool SetPosInFile(const Position pos, const Origin from = Origin::Beggining) noexcept
+            inline bool SavePos(Position REF pos) const noexcept //fgetpos
             {
-                if(this->IsClosed())
-                    return false;
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed: return false;
+                    default:                     return GetUnsafe().SavePos(pos);
+                }
+            }
+            inline bool RestorePos(const Position REF pos) const noexcept //fsetpos
+            {
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed: return false;
+                    default:                     return GetUnsafe().RestorePos(pos);
+                }
+            }
 
-                return this->GetUnsafe().SetPosInFile(pos, from);
+            Offset GetOffset() noexcept
+            {
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed: return ThisType::ErrorPos;
+                    default:                     return GetUnsafe().GetOffset();
+                }
+            }
+
+            bool MoveTo(const Offset offset, const Origin from = Origin::Beggining) noexcept
+            {
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed: return false;
+                    default:                     return GetUnsafe().MoveTo(offset, from);
+                }
             }
             void MoveToBeggining() noexcept
             {
-                if(this->IsClosed())
-                    return;
-
-                this->GetUnsafe().MoveToBeggining();
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed: return;
+                    default:                     return GetUnsafe().MoveToBeggining();
+                }
             }
             void MoveToEnd() noexcept
             {
-                if(this->IsClosed())
-                    return;
-
-                this->GetUnsafe().MoveToEnd();
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed: return;
+                    default:                     return GetUnsafe().MoveToEnd();
+                }
             }
-            bool MoveBy(Position by) noexcept
+            bool MoveBy(Offset offset) noexcept
             {
-                if(this->IsClosed())
-                    return false;
-
-                return this->GetUnsafe().MoveBy(by);
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed: return false;
+                    default:                     return GetUnsafe().MoveBy(offset);
+                }
             }
 
         public:
             template<typename PointerType>
             [[nodiscard]] bool Read(PointerType PTR ptrToBuffer, Size count) noexcept
             {
-                if(this->IsClosed())
-                    return false;
-
-                return this->GetUnsafe().Read(ptrToBuffer, count);
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed:
+                    case EnabledActions::None:
+                    case EnabledActions::Write:  return false;
+                    default:                     return GetUnsafe().Read(ptrToBuffer, count);
+                }
             }
 
             template<typename PointerType>
             [[nodiscard]] Size ReadAndCount(PointerType PTR ptrToBuffer, Size count) noexcept
             {
-                if(this->IsClosed())
-                    return 0;
-
-                return this->GetUnsafe().ReadAndCount(ptrToBuffer, count);
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed:
+                    case EnabledActions::None:
+                    case EnabledActions::Write:  return 0;
+                    default:                     return GetUnsafe().ReadAndCount(ptrToBuffer, count);
+                }
             }
 
             template<typename ObjectType>
             [[nodiscard]] bool ReadObject(ObjectType RVALUE_REF object) noexcept
             {
-                if(this->IsClosed())
-                    return false;
-
-                return this->GetUnsafe().ReadObject(object);
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed:
+                    case EnabledActions::None:
+                    case EnabledActions::Write:  return false;
+                    default:                     return GetUnsafe().ReadObject(object);
+                }
             }
 
             template<typename CharT>
             [[nodiscard]] inline bool ReadString(String<CharT> REF output) noexcept
             {
-                if(this->IsClosed())
-                    return false;
-
-                return this->GetUnsafe().ReadString(output);
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed:
+                    case EnabledActions::None:
+                    case EnabledActions::Write:  return false;
+                    default:                     return GetUnsafe().ReadString(output);
+                }
             }
 
 
@@ -142,36 +183,48 @@ namespace cio::Internal
             template<typename PointerType>
             [[nodiscard]] bool Write(PointerType PTR ptrToData, Size count) noexcept
             {
-                if(this->IsClosed())
-                    return false;
-
-                return this->GetUnsafe().Write(ptrToData, count);
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed:
+                    case EnabledActions::None:
+                    case EnabledActions::Read:  return false;
+                    default:                    return GetUnsafe().Write(ptrToData, count);
+                }
             }
             template<typename PointerType>
             [[nodiscard]] Size WriteAndCount(PointerType PTR ptrToData, Size count) noexcept
             {
-                if(this->IsClosed())
-                    return 0;
-
-                return this->GetUnsafe().WriteAndCount(ptrToData, count);
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed:
+                    case EnabledActions::None:
+                    case EnabledActions::Read:  return 0;
+                    default:                    return GetUnsafe().WriteAndCount(ptrToData, count);
+                }
             }
             template<typename ObjectType>
             [[nodiscard]] bool WriteObject(ObjectType RVALUE_REF object) noexcept
             {
-                if(this->IsClosed())
-                    return false;
-
-                return this->GetUnsafe().WriteObject(object);
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed:
+                    case EnabledActions::None:
+                    case EnabledActions::Read:  return false;
+                    default:                    return GetUnsafe().WriteObject(object);
+                }
             }
 
             template <typename T,
                       std::enable_if_t<IsAnyString_v<T>, int> = 0>
             [[nodiscard]] bool WriteString(T RVALUE_REF str) noexcept
             {
-                if(this->IsClosed())
-                    return false;
-
-                return this->GetUnsafe().WriteString(std::forward<T>(str));
+                switch (GetEnabled())
+                {
+                    case EnabledActions::Closed:
+                    case EnabledActions::None:
+                    case EnabledActions::Read:  return false;
+                    default:                    return GetUnsafe().WriteString(std::forward(str));
+                }
             }
 
 
@@ -199,57 +252,6 @@ namespace cio::Internal
             }
 
         public:
-            inline static bool GetFileStatics(Stats REF stats, const ConstFileDescriptor descriptor) noexcept
-            {
-                if(descriptor == FileDescriptor::ErrorDescriptor)
-                    return false;
-
-                return UnsafeFile::GetFileStatics(stats, descriptor);
-            }
-
-            inline static bool GetFileStatics(Stats REF stats, const OsStringView filename)
-            {
-                return UnsafeFile::GetFileStatics(stats, filename);
-            }
-
-            static FileSize GetFileSize(const ConstFileDescriptor descriptor) noexcept
-            {
-                if(descriptor == FileDescriptor::ErrorDescriptor)
-                    return UnsafeFile::ErrorSize;
-
-                return UnsafeFile::GetFileSize(descriptor);
-            }
-
-            static FileSize GetFileSize(const OsStringView filename) noexcept
-            {
-                return UnsafeFile::GetFileSize(filename);
-            }
-
-
-        public:
-            ConstFileDescriptor GetFileDescriptor() const noexcept
-            {
-                if(this->IsClosed())
-                    return ConstFileDescriptor();
-
-                return this->GetUnsafe().GetFileDescriptor();
-            }
-            FileDescriptor GetFileDescriptor() noexcept
-            {
-                if(this->IsClosed())
-                    return FileDescriptor();
-
-                return this->GetUnsafe().GetFileDescriptor();
-            }
-
-            bool GetFileStatics(Stats REF stats) const noexcept
-            {
-                if(this->IsClosed())
-                    return false;
-
-                return this->GetUnsafe().GetFileStatics(stats);
-            }
-
             FileSize GetFileSize() const noexcept
             {
                 if(this->IsClosed())
@@ -261,9 +263,6 @@ namespace cio::Internal
 }
 namespace cio
 {
-    template<typename CharType>
-    using BasicFile     = Internal::UnadaptedFile<CstdioAdapter<CharType>>;
-    using File          = BasicFile<char8>;
-    using WFile         = BasicFile<charW>;
+    using File = Internal::UnadaptedFile<CstdioAdapter>;
 }
 #endif // FILE_H

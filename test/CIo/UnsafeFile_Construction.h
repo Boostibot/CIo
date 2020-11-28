@@ -3,7 +3,7 @@
 
 #include "UnsafeFile_TestingUtilities.h"
 
-namespace CIo::UnsafeFileTesting
+namespace cio::UnsafeFileTesting
 {
     TEST_CASE("[UnsafeFile] : Only char and wchar_t specialisations should compile", "[UnsafeFile]")
     {

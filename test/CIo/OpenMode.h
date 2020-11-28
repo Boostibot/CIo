@@ -4,7 +4,7 @@
 #include "Catch2/Catch.hpp"
 #include "src/OpenMode.h"
 
-namespace CIo::OpenModeTesting
+namespace cio::OpenModeTesting
 {
     using namespace OpenModeHelpers;
 }
@@ -12,7 +12,7 @@ namespace CIo::OpenModeTesting
 #define OpenMode_TEST_COMPILE_ERROR false
 #define OpenModeTestedTypes char8, charW
 
-namespace CIo::OpenModeTesting
+namespace cio::OpenModeTesting
 {
     namespace FlagPresenceTesting
     {
@@ -22,20 +22,20 @@ namespace CIo::OpenModeTesting
             WHEN("Given arguments containing the lookignForFlag it should return true")
             {
                 REQUIRE(FlagPresence::IsFlagPresent(OpenModeFlag::Read, OpenModeFlag::Read) == true);
-                REQUIRE(FlagPresence::IsFlagPresent(WindowsOpenModeFlag::IfPossibleNoFlushingToDisk, OpenModeFlag::Append, WindowsOpenModeFlag::IfPossibleNoFlushingToDisk) == true);
-                REQUIRE(FlagPresence::IsFlagPresent(OpenModeFlag::Write, OpenModeFlag::MustExist, OpenModeFlag::Write, OpenModeFlag::MustExist) == true);
+                REQUIRE(FlagPresence::IsFlagPresent(WindowsOpenModeFlag::IfPossibleNoFlushingToDisk, OpenModeFlag::StartAtEnd, WindowsOpenModeFlag::IfPossibleNoFlushingToDisk) == true);
+                REQUIRE(FlagPresence::IsFlagPresent(OpenModeFlag::Write, OpenModeFlag::MustNotExist, OpenModeFlag::Write, OpenModeFlag::MustNotExist) == true);
                 REQUIRE(FlagPresence::IsFlagPresent(WindowsOpenModeFlag::RandomAccessOptimized, OpenModeFlag::Read, OpenModeFlag::Write, WindowsOpenModeFlag::RandomAccessOptimized) == true);
             }
             WHEN("Given arguments containing the lookignForFlag multiple times it should return true")
             {
                 REQUIRE(FlagPresence::IsFlagPresent(OpenModeFlag::Read, OpenModeFlag::Read, OpenModeFlag::Read) == true);
-                REQUIRE(FlagPresence::IsFlagPresent(WindowsOpenModeFlag::Utf8Encoding, OpenModeFlag::Append, WindowsOpenModeFlag::Utf8Encoding, WindowsOpenModeFlag::Utf8Encoding) == true);
-                REQUIRE(FlagPresence::IsFlagPresent(OpenModeFlag::Write, OpenModeFlag::Append, WindowsOpenModeFlag::Utf8Encoding, OpenModeFlag::Write, OpenModeFlag::Write) == true);
+                REQUIRE(FlagPresence::IsFlagPresent(WindowsOpenModeFlag::Utf8Encoding, OpenModeFlag::StartAtEnd, WindowsOpenModeFlag::Utf8Encoding, WindowsOpenModeFlag::Utf8Encoding) == true);
+                REQUIRE(FlagPresence::IsFlagPresent(OpenModeFlag::Write, OpenModeFlag::StartAtEnd, WindowsOpenModeFlag::Utf8Encoding, OpenModeFlag::Write, OpenModeFlag::Write) == true);
             }
             WHEN("Given arguments not containing the lookignForFlag it should return false")
             {
                 REQUIRE(FlagPresence::IsFlagPresent(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::Write) == false);
-                REQUIRE(FlagPresence::IsFlagPresent(OpenModeFlag::Write, WindowsOpenModeFlag::IfPossibleNoFlushingToDisk, OpenModeFlag::Append) == false);
+                REQUIRE(FlagPresence::IsFlagPresent(OpenModeFlag::Write, WindowsOpenModeFlag::IfPossibleNoFlushingToDisk, OpenModeFlag::StartAtEnd) == false);
                 REQUIRE(FlagPresence::IsFlagPresent(WindowsOpenModeFlag::Utf8Encoding, WindowsOpenModeFlag::RandomAccessOptimized, OpenModeFlag::Write) == false);
             }
             WHEN("Given arguments only lookingForType it should return false")
@@ -51,19 +51,19 @@ namespace CIo::OpenModeTesting
         {
             GIVEN("A FlagPresence constructed with certain flags")
             {
-                FlagPresence presence(OpenModeFlag::Write, OpenModeFlag::Append, OpenModeFlag::MustExist, WindowsOpenModeFlag::DeleteAfterClose);
+                FlagPresence presence(OpenModeFlag::Write, OpenModeFlag::StartAtEnd, OpenModeFlag::MustNotExist, WindowsOpenModeFlag::DeleteAfterClose);
                 WHEN("A [] operator is used with the value of constructed flag it should be present")
                 {
                     REQUIRE(presence[OpenModeFlag::Write] == true);
-                    REQUIRE(presence[OpenModeFlag::Append] == true);
-                    REQUIRE(presence[OpenModeFlag::MustExist] == true);
+                    REQUIRE(presence[OpenModeFlag::StartAtEnd] == true);
+                    REQUIRE(presence[OpenModeFlag::MustNotExist] == true);
                     REQUIRE(presence[WindowsOpenModeFlag::DeleteAfterClose] == true);
                 }
                 WHEN("A [] operator is used with the value of not constructed flag it should not be present")
                 {
                     REQUIRE(presence[OpenModeFlag::Read] == false);
-                    REQUIRE(presence[OpenModeFlag::Binary] == false);
-                    REQUIRE(presence[OpenModeFlag::MustNotExist] == false);
+                    REQUIRE(presence[OpenModeFlag::Translated] == false);
+                    REQUIRE(presence[OpenModeFlag::Override] == false);
                     REQUIRE(presence[WindowsOpenModeFlag::IfPossibleNoFlushingToDisk] == false);
                 }
             }
@@ -76,7 +76,7 @@ namespace CIo::OpenModeTesting
                 FlagPresence presence;
                 THEN("There should be no presence noted")
                 {
-                    for(OpenModeEnumsBaseType i = 0; i < OpenModeFlagsCount; i++)
+                    for(EnumBaseType i = 0; i < OpenModeFlagsCount; i++)
                         CHECK(presence[static_cast<OpenModeFlag>(i)] == false);
                 }
             }
@@ -85,10 +85,11 @@ namespace CIo::OpenModeTesting
             {
                 FlagPresence presence(OpenModeFlag::Read,
                                       OpenModeFlag::Write,
-                                      OpenModeFlag::Append,
-                                      OpenModeFlag::MustExist,
-                                      OpenModeFlag::Binary,
+                                      OpenModeFlag::Create,
+                                      OpenModeFlag::Override,
                                       OpenModeFlag::MustNotExist,
+                                      OpenModeFlag::StartAtEnd,
+                                      OpenModeFlag::Translated,
                                       WindowsOpenModeFlag::Text,
                                       WindowsOpenModeFlag::CommitDirectlyToDisk,
                                       WindowsOpenModeFlag::CommitIndirectlyToDisk,
@@ -103,7 +104,7 @@ namespace CIo::OpenModeTesting
 
                 THEN("All flags should be present")
                 {
-                    for(OpenModeEnumsBaseType i = 0; i < OpenModeFlagsCount; i++)
+                    for(EnumBaseType i = 0; i < OpenModeFlagsCount; i++)
                         CHECK(presence[static_cast<OpenModeFlag>(i)] == true);
                 }
             }
@@ -121,38 +122,44 @@ namespace CIo::OpenModeTesting
                     SECTION("Flag OpenModeFlag::Write")
                     {
                         FlagPresence presence(OpenModeFlag::Write);
-                        CHECK(presence[OpenModeFlag::Append] == false);
+                        CHECK(presence[OpenModeFlag::Create] == false);
                         CHECK(presence[OpenModeFlag::Write] == true);
                     }
-                    SECTION("Flag OpenModeFlag::Append")
+                    SECTION("Flag OpenModeFlag::Create")
                     {
-                        FlagPresence presence(OpenModeFlag::Append);
-                        CHECK(presence[OpenModeFlag::MustExist] == false);
-                        CHECK(presence[OpenModeFlag::Append] == true);
+                        FlagPresence presence(OpenModeFlag::Create);
+                        CHECK(presence[OpenModeFlag::Override] == false);
+                        CHECK(presence[OpenModeFlag::Create] == true);
                     }
-                    SECTION("Flag OpenModeFlag::MustExist")
+                    SECTION("Flag OpenModeFlag::Override")
                     {
-                        FlagPresence presence(OpenModeFlag::MustExist);
-                        CHECK(presence[WindowsOpenModeFlag::Text] == false);
-                        CHECK(presence[OpenModeFlag::MustExist] == true);
-                    }
-                    SECTION("Flag WindowsOpenModeFlag::Text")
-                    {
-                        FlagPresence presence(WindowsOpenModeFlag::Text);
-                        CHECK(presence[OpenModeFlag::Binary] == false);
-                        CHECK(presence[WindowsOpenModeFlag::Text] == true);
-                    }
-                    SECTION("Flag OpenModeFlag::Binary")
-                    {
-                        FlagPresence presence(OpenModeFlag::Binary);
+                        FlagPresence presence(OpenModeFlag::Override);
                         CHECK(presence[OpenModeFlag::MustNotExist] == false);
-                        CHECK(presence[OpenModeFlag::Binary] == true);
+                        CHECK(presence[OpenModeFlag::Override] == true);
                     }
                     SECTION("Flag OpenModeFlag::MustNotExist")
                     {
                         FlagPresence presence(OpenModeFlag::MustNotExist);
-                        CHECK(presence[WindowsOpenModeFlag::CommitDirectlyToDisk] == false);
+                        CHECK(presence[OpenModeFlag::StartAtEnd] == false);
                         CHECK(presence[OpenModeFlag::MustNotExist] == true);
+                    }
+                    SECTION("Flag OpenModeFlag::StartAtEnd")
+                    {
+                        FlagPresence presence(OpenModeFlag::StartAtEnd);
+                        CHECK(presence[OpenModeFlag::Translated] == false);
+                        CHECK(presence[OpenModeFlag::StartAtEnd] == true);
+                    }
+                    SECTION("Flag OpenModeFlag::Translated")
+                    {
+                        FlagPresence presence(OpenModeFlag::Translated);
+                        CHECK(presence[WindowsOpenModeFlag::Text] == false);
+                        CHECK(presence[OpenModeFlag::Translated] == true);
+                    }
+                    SECTION("Flag WindowsOpenModeFlag::Text")
+                    {
+                        FlagPresence presence(WindowsOpenModeFlag::Text);
+                        CHECK(presence[WindowsOpenModeFlag::CommitDirectlyToDisk] == false);
+                        CHECK(presence[WindowsOpenModeFlag::Text] == true);
                     }
                     SECTION("Flag WindowsOpenModeFlag::CommitDirectlyToDisk")
                     {
@@ -229,18 +236,18 @@ namespace CIo::OpenModeTesting
                         CHECK(presence[WindowsOpenModeFlag::DeleteAfterClose] == true);
                         CHECK(presence[WindowsOpenModeFlag::Utf16Encoding] == true);
 
-                        CHECK(presence[OpenModeFlag::Append] == false);
+                        CHECK(presence[OpenModeFlag::StartAtEnd] == false);
                         CHECK(presence[WindowsOpenModeFlag::Text] == false);
                         CHECK(presence[WindowsOpenModeFlag::RandomAccessOptimized] == false);
 
                     }
-                    SECTION("Flags OpenModeFlag::Binary, OpenModeFlag::Write, OpenModeFlag::CommitDirectlyToDisk, OpenModeFlag::Append")
+                    SECTION("Flags OpenModeFlag::Binary, OpenModeFlag::Write, OpenModeFlag::CommitDirectlyToDisk, OpenModeFlag::StartAtEnd")
                     {
-                        FlagPresence presence(OpenModeFlag::Binary, OpenModeFlag::Write, WindowsOpenModeFlag::CommitDirectlyToDisk, OpenModeFlag::Append);
-                        CHECK(presence[OpenModeFlag::Binary] == true);
+                        FlagPresence presence(OpenModeFlag::Translated, OpenModeFlag::Write, WindowsOpenModeFlag::CommitDirectlyToDisk, OpenModeFlag::StartAtEnd);
+                        CHECK(presence[OpenModeFlag::Translated] == true);
                         CHECK(presence[OpenModeFlag::Write] == true);
                         CHECK(presence[WindowsOpenModeFlag::CommitDirectlyToDisk] == true);
-                        CHECK(presence[OpenModeFlag::Append] == true);
+                        CHECK(presence[OpenModeFlag::StartAtEnd] == true);
 
                         CHECK(presence[OpenModeFlag::Read] == false);
                         CHECK(presence[WindowsOpenModeFlag::Text] == false);
@@ -249,9 +256,9 @@ namespace CIo::OpenModeTesting
                     }
                     SECTION("Flags OpenModeFlag::NotInheritedByChildProcess, OpenModeFlag::MustExist, OpenModeFlag::Utf8Encoding")
                     {
-                        FlagPresence presence(WindowsOpenModeFlag::NotInheritedByChildProcess, OpenModeFlag::MustExist, WindowsOpenModeFlag::Utf8Encoding);
+                        FlagPresence presence(WindowsOpenModeFlag::NotInheritedByChildProcess, OpenModeFlag::MustNotExist, WindowsOpenModeFlag::Utf8Encoding);
                         CHECK(presence[WindowsOpenModeFlag::NotInheritedByChildProcess] == true);
-                        CHECK(presence[OpenModeFlag::MustExist] == true);
+                        CHECK(presence[OpenModeFlag::MustNotExist] == true);
                         CHECK(presence[WindowsOpenModeFlag::Utf8Encoding] == true);
 
                         CHECK(presence[OpenModeFlag::Write] == false);
@@ -268,8 +275,8 @@ namespace CIo::OpenModeTesting
                         CHECK(presence[WindowsOpenModeFlag::UnicodeEncoding] == true);
 
                         CHECK(presence[OpenModeFlag::Write] == false);
-                        CHECK(presence[OpenModeFlag::Binary] == false);
-                        CHECK(presence[OpenModeFlag::Append] == false);
+                        CHECK(presence[OpenModeFlag::Translated] == false);
+                        CHECK(presence[OpenModeFlag::StartAtEnd] == false);
                         CHECK(presence[WindowsOpenModeFlag::CommitIndirectlyToDisk] == false);
 
                     }
@@ -288,18 +295,18 @@ namespace CIo::OpenModeTesting
                         CHECK(presence[WindowsOpenModeFlag::DeleteAfterClose] == true);
                         CHECK(presence[WindowsOpenModeFlag::Utf16Encoding] == true);
 
-                        CHECK(presence[OpenModeFlag::Append] == false);
+                        CHECK(presence[OpenModeFlag::StartAtEnd] == false);
                         CHECK(presence[WindowsOpenModeFlag::Text] == false);
                         CHECK(presence[WindowsOpenModeFlag::RandomAccessOptimized] == false);
 
                     }
-                    SECTION("Flags OpenModeFlag::Binary, OpenModeFlag::Write, OpenModeFlag::CommitDirectlyToDisk, OpenModeFlag::Append")
+                    SECTION("Flags OpenModeFlag::Translated, OpenModeFlag::Write, OpenModeFlag::CommitDirectlyToDisk, OpenModeFlag::StartAtEnd")
                     {
-                        FlagPresence presence(OpenModeFlag::Binary, OpenModeFlag::Write, WindowsOpenModeFlag::CommitDirectlyToDisk, OpenModeFlag::Binary, OpenModeFlag::Append);
-                        CHECK(presence[OpenModeFlag::Binary] == true);
+                        FlagPresence presence(OpenModeFlag::Translated, OpenModeFlag::Write, WindowsOpenModeFlag::CommitDirectlyToDisk, OpenModeFlag::Translated, OpenModeFlag::StartAtEnd);
+                        CHECK(presence[OpenModeFlag::Translated] == true);
                         CHECK(presence[OpenModeFlag::Write] == true);
                         CHECK(presence[WindowsOpenModeFlag::CommitDirectlyToDisk] == true);
-                        CHECK(presence[OpenModeFlag::Append] == true);
+                        CHECK(presence[OpenModeFlag::StartAtEnd] == true);
 
                         CHECK(presence[OpenModeFlag::Read] == false);
                         CHECK(presence[WindowsOpenModeFlag::Text] == false);
@@ -308,9 +315,9 @@ namespace CIo::OpenModeTesting
                     }
                     SECTION("Flags OpenModeFlag::NotInheritedByChildProcess, OpenModeFlag::MustExist, OpenModeFlag::Utf8Encoding")
                     {
-                        FlagPresence presence(WindowsOpenModeFlag::NotInheritedByChildProcess, OpenModeFlag::MustExist, OpenModeFlag::MustExist, WindowsOpenModeFlag::Utf8Encoding);
+                        FlagPresence presence(WindowsOpenModeFlag::NotInheritedByChildProcess, OpenModeFlag::MustNotExist, OpenModeFlag::MustNotExist, WindowsOpenModeFlag::Utf8Encoding);
                         CHECK(presence[WindowsOpenModeFlag::NotInheritedByChildProcess] == true);
-                        CHECK(presence[OpenModeFlag::MustExist] == true);
+                        CHECK(presence[OpenModeFlag::MustNotExist] == true);
                         CHECK(presence[WindowsOpenModeFlag::Utf8Encoding] == true);
 
                         CHECK(presence[OpenModeFlag::Write] == false);
@@ -327,8 +334,8 @@ namespace CIo::OpenModeTesting
                         CHECK(presence[WindowsOpenModeFlag::UnicodeEncoding] == true);
 
                         CHECK(presence[OpenModeFlag::Write] == false);
-                        CHECK(presence[OpenModeFlag::Binary] == false);
-                        CHECK(presence[OpenModeFlag::Append] == false);
+                        CHECK(presence[OpenModeFlag::Translated] == false);
+                        CHECK(presence[OpenModeFlag::StartAtEnd] == false);
                         CHECK(presence[WindowsOpenModeFlag::CommitIndirectlyToDisk] == false);
 
                     }
@@ -339,26 +346,26 @@ namespace CIo::OpenModeTesting
 
     namespace OpenModeConversionStateTesting
     {
-        TEMPLATE_TEST_CASE("[OpenModeConversionState] : Constructor should initialise the FlagPresence according to the given paarmeters", "[OpenModeConversionState][Constructor]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[ConversionState] : Constructor should initialise the FlagPresence according to the given paarmeters", "[ConversionState][Constructor]", OpenModeTestedTypes)
         {
-            using ConversionState = OpenModeConversionState<TestType>;
+            using ConversionState = ConversionState<TestType>;
 
             GIVEN("A state constructed with certain flags")
             {
-                ConversionState state(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::Write, WindowsOpenModeFlag::Text, OpenModeFlag::Binary, WindowsOpenModeFlag::UnicodeEncoding);
+                ConversionState state(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::Write, WindowsOpenModeFlag::Text, OpenModeFlag::Translated, WindowsOpenModeFlag::UnicodeEncoding);
                 THEN("the specified flags should be present")
                 {
                     REQUIRE(state.Presence[OpenModeFlag::Read] == true);
                     REQUIRE(state.Presence[OpenModeFlag::Write] == true);
                     REQUIRE(state.Presence[WindowsOpenModeFlag::Text] == true);
-                    REQUIRE(state.Presence[OpenModeFlag::Binary] == true);
+                    REQUIRE(state.Presence[OpenModeFlag::Translated] == true);
                     REQUIRE(state.Presence[WindowsOpenModeFlag::UnicodeEncoding] == true);
                 }
                 THEN("the not specified flags should not be present")
                 {
                     REQUIRE(state.Presence[OpenModeFlag::MustNotExist] == false);
                     REQUIRE(state.Presence[WindowsOpenModeFlag::NotInheritedByChildProcess] == false);
-                    REQUIRE(state.Presence[OpenModeFlag::Append] == false);
+                    REQUIRE(state.Presence[OpenModeFlag::StartAtEnd] == false);
                     REQUIRE(state.Presence[WindowsOpenModeFlag::SequntialAccessOptimized] == false);
                     REQUIRE(state.Presence[WindowsOpenModeFlag::RandomAccessOptimized] == false);
                     REQUIRE(state.Presence[WindowsOpenModeFlag::Utf16Encoding] == false);
@@ -371,9 +378,9 @@ namespace CIo::OpenModeTesting
                 {
                     REQUIRE(state.Presence[OpenModeFlag::Read] == false);
                     REQUIRE(state.Presence[OpenModeFlag::Write] == false);
-                    REQUIRE(state.Presence[OpenModeFlag::Append] == false);
+                    REQUIRE(state.Presence[OpenModeFlag::StartAtEnd] == false);
                     REQUIRE(state.Presence[WindowsOpenModeFlag::Text] == false);
-                    REQUIRE(state.Presence[OpenModeFlag::Binary] == false);
+                    REQUIRE(state.Presence[OpenModeFlag::Translated] == false);
                     REQUIRE(state.Presence[WindowsOpenModeFlag::CommitDirectlyToDisk] == false);
                     REQUIRE(state.Presence[WindowsOpenModeFlag::UnicodeEncoding] == false);
                     REQUIRE(state.Presence[WindowsOpenModeFlag::Utf16Encoding] == false);
@@ -381,14 +388,14 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenModeConversionState] : AreFlagsConflicting should return true if the flags are logically conflicting", "[OpenModeConversionState][AreFlagsConflicting]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[ConversionState] : AreFlagsConflicting should return true if the flags are logically conflicting", "[ConversionState][AreFlagsConflicting]", OpenModeTestedTypes)
         {
-            using ConversionState = OpenModeConversionState<TestType>;
+            using ConversionState = ConversionState<TestType>;
 
             GIVEN("A states constructed with not conflicting flags")
             {
                 ConversionState state1(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::Write);
-                ConversionState state2(OpenModeFlag::Read, WindowsOpenModeFlag::UnicodeEncoding, OpenModeFlag::MustExist);
+                ConversionState state2(OpenModeFlag::Read, WindowsOpenModeFlag::UnicodeEncoding);
                 ConversionState state3;
                 THEN("The flags should not conflict")
                 {
@@ -398,20 +405,20 @@ namespace CIo::OpenModeTesting
                 }
             }
 
-            GIVEN("states constructed with MustExist and MustNotExist flags")
+            GIVEN("states constructed with MustNotExist flag without Create flag")
             {
-                ConversionState state1(OpenModeFlag::MustExist, OpenModeFlag::MustNotExist);
-                ConversionState state2(OpenModeFlag::MustExist, OpenModeFlag::MustNotExist, OpenModeFlag::Write);
+                ConversionState state1(OpenModeFlag::MustNotExist);
+                ConversionState state2(OpenModeFlag::MustNotExist, OpenModeFlag::Write, OpenModeFlag::Read, WindowsOpenModeFlag::UnicodeEncoding);
                 THEN("The flags should conflict")
                 {
                     REQUIRE(state1.AreFlagsConflicting() == true);
                     REQUIRE(state2.AreFlagsConflicting() == true);
                 }
             }
-            GIVEN("states constructed with Text and Binary flags")
+            GIVEN("states constructed with Text and withouth the Translated flag")
             {
-                ConversionState state1(WindowsOpenModeFlag::Text, OpenModeFlag::Binary);
-                ConversionState state2(WindowsOpenModeFlag::Text, OpenModeFlag::Read, OpenModeFlag::Binary);
+                ConversionState state1(WindowsOpenModeFlag::Text);
+                ConversionState state2(WindowsOpenModeFlag::Text, OpenModeFlag::Read, WindowsOpenModeFlag::UnicodeEncoding);
                 THEN("The flags should conflict")
                 {
                     REQUIRE(state1.AreFlagsConflicting() == true);
@@ -450,156 +457,178 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenModeConversionState] : SetCOpenModeAndValidty should match the given flags to a COpenMode or set invalid", "[OpenModeConversionState][SetCOpenModeAndValidty]", OpenModeTestedTypes)
+
+        TEMPLATE_TEST_CASE("[ConversionState] : SetCOpenModeAndValidty should match the given flags to a COpenMode or set invalid", "[ConversionState][SetCOpenModeAndValidty]", OpenModeTestedTypes)
         {
-            using ConversionState = OpenModeConversionState<TestType>;
+            using ConversionState = ConversionState<TestType>;
             COpenMode copenMode;
-            OpenModeValidity validty;
+            RequiredActions required;
 
             WHEN("State is constructed with valid combination of flags the copenMode should be set"
                  " to the appropriate mode and validity should be set to valid")
             {
-                SECTION("Flag Read should result in ReadWrite")
+                SECTION("Flag Read should result in Read and no required actions")
                 {
                     ConversionState state(OpenModeFlag::Read);
-                    state.SetCOpenModeAndValidty(copenMode, validty);
+                    state.GetCopenModeAndRequiredActions(copenMode, required);
 
-                    CHECK(copenMode == COpenMode::ReadWrite);
-                    REQUIRE(validty == OpenModeValidity::Valid);
+                    CHECK(copenMode == COpenMode::Read);
+                    CHECK(required.MustExist == false);
+                    CHECK(required.MustNotExist == false);
+                    CHECK(required.Create == false);
+                    CHECK(required.Delete == false);
+                    CHECK(required.StartAtEnd == false);
                 }
-
-                SECTION("Flags Write should result in Write")
+                SECTION("Flags Read, Write, Create should result in ReadExtended and Create actions")
                 {
-                    ConversionState state(OpenModeFlag::Write);
-                    state.SetCOpenModeAndValidty(copenMode, validty);
+                    ConversionState state(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::Create);
+                    state.GetCopenModeAndRequiredActions(copenMode, required);
+
+                    CHECK(copenMode == COpenMode::ReadExtended);
+                    CHECK(required.MustExist == false);
+                    CHECK(required.MustNotExist == false);
+                    CHECK(required.Create == true);
+                    CHECK(required.Delete == false);
+                    CHECK(required.StartAtEnd == false);
+                }
+                SECTION("Flags Write, Override should result in Write and MustExist actions")
+                {
+                    ConversionState state(OpenModeFlag::Write, OpenModeFlag::Override);
+                    state.GetCopenModeAndRequiredActions(copenMode, required);
 
                     CHECK(copenMode == COpenMode::Write);
-                    REQUIRE(validty == OpenModeValidity::Valid);
+                    CHECK(required.MustExist == true);
+                    CHECK(required.MustNotExist == false);
+                    CHECK(required.Create == false);
+                    CHECK(required.Delete == false);
+                    CHECK(required.StartAtEnd == false);
                 }
-
-                SECTION("Flags Read, Write, MustExist should result in ReadWriteMustExist")
+                SECTION("Flags Read, Override, StartAtEnd should result in Read and MustExist, Create, Delete, StartAtEnd actions")
                 {
-                    ConversionState state(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::MustExist);
-                    state.SetCOpenModeAndValidty(copenMode, validty);
+                    ConversionState state(OpenModeFlag::Read, OpenModeFlag::Override, OpenModeFlag::StartAtEnd);
+                    state.GetCopenModeAndRequiredActions(copenMode, required);
 
-                    CHECK(copenMode == COpenMode::ReadWriteMustExist);
-                    REQUIRE(validty == OpenModeValidity::Valid);
+                    CHECK(copenMode == COpenMode::Read);
+                    CHECK(required.MustExist == true);
+                    CHECK(required.MustNotExist == false);
+                    CHECK(required.Create == true);
+                    CHECK(required.Delete == true);
+                    CHECK(required.StartAtEnd == true);
                 }
-
-                SECTION("Flags Write and Append should result in WriteAppend")
+                SECTION("Flags Write, Override, StartAtEnd should result in Write and MustNotExist, Create actions")
                 {
-                    ConversionState state(OpenModeFlag::Write, OpenModeFlag::Append);
-                    state.SetCOpenModeAndValidty(copenMode, validty);
+                    ConversionState state(OpenModeFlag::Write, OpenModeFlag::Create, OpenModeFlag::MustNotExist);
+                    state.GetCopenModeAndRequiredActions(copenMode, required);
 
-                    CHECK(copenMode == COpenMode::WriteAppend);
-                    REQUIRE(validty == OpenModeValidity::Valid);
+                    CHECK(copenMode == COpenMode::Write);
+                    CHECK(required.MustExist == false);
+                    CHECK(required.MustNotExist == true);
+                    CHECK(required.Create == true);
+                    CHECK(required.Delete == false);
+                    CHECK(required.StartAtEnd == false);
                 }
+
             }
 
             WHEN("State is constructed with additional mode flags should skip them"
                  "and behave like without them")
             {
 
-                SECTION("Flags Read and MustNotExist should result in ReadWrite")
+                SECTION("Flags Read, Text should result in Read and no required actions")
                 {
-                    ConversionState state(OpenModeFlag::Read, OpenModeFlag::MustNotExist);
-                    state.SetCOpenModeAndValidty(copenMode, validty);
-                    CHECK(copenMode == COpenMode::ReadWrite);
-                    REQUIRE(validty == OpenModeValidity::Valid);
-                }
+                    ConversionState state(OpenModeFlag::Read, WindowsOpenModeFlag::Text);
+                    state.GetCopenModeAndRequiredActions(copenMode, required);
 
-                SECTION("Flags Read, Write and Binary should result in ReadWrite")
-                {
-                    ConversionState state(OpenModeFlag::Read, OpenModeFlag::Write, WindowsOpenModeFlag::Text, OpenModeFlag::Binary);
-                    state.SetCOpenModeAndValidty(copenMode, validty);
-                    CHECK(copenMode == COpenMode::ReadWrite);
-                    REQUIRE(validty == OpenModeValidity::Valid);
+                    CHECK(copenMode == COpenMode::Read);
+                    CHECK(required.MustExist == false);
+                    CHECK(required.MustNotExist == false);
+                    CHECK(required.Create == false);
+                    CHECK(required.Delete == false);
+                    CHECK(required.StartAtEnd == false);
                 }
-
-                SECTION("Flags Read, Write, MustExist, CommitDirectlyToDisk should result in ReadWriteMustExist")
+                SECTION("Flags Read, Write, CommitDirectlyToDisk, Create should result in ReadExtended and Create actions")
                 {
-                    ConversionState state(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::MustExist, WindowsOpenModeFlag::CommitDirectlyToDisk);
-                    state.SetCOpenModeAndValidty(copenMode, validty);
-                    CHECK(copenMode == COpenMode::ReadWriteMustExist);
-                    REQUIRE(validty == OpenModeValidity::Valid);
+                    ConversionState state(OpenModeFlag::Read, OpenModeFlag::Write, WindowsOpenModeFlag::CommitDirectlyToDisk, OpenModeFlag::Create);
+                    state.GetCopenModeAndRequiredActions(copenMode, required);
+
+                    CHECK(copenMode == COpenMode::ReadExtended);
+                    CHECK(required.MustExist == false);
+                    CHECK(required.MustNotExist == false);
+                    CHECK(required.Create == true);
+                    CHECK(required.Delete == false);
+                    CHECK(required.StartAtEnd == false);
                 }
-
-                SECTION("Flags Write, Append, UnicodeEncoding should result in WriteAppend")
+                SECTION("Flags Write, Override, DeleteAfterClose, UnicodeEncoding, should result in Write and MustExist actions")
                 {
-                    ConversionState state(OpenModeFlag::Write, OpenModeFlag::Append, WindowsOpenModeFlag::UnicodeEncoding);
-                    state.SetCOpenModeAndValidty(copenMode, validty);
-                    CHECK(copenMode == COpenMode::WriteAppend);
-                    REQUIRE(validty == OpenModeValidity::Valid);
+                    ConversionState state(OpenModeFlag::Write, OpenModeFlag::Override, WindowsOpenModeFlag::DeleteAfterClose, WindowsOpenModeFlag::UnicodeEncoding);
+                    state.GetCopenModeAndRequiredActions(copenMode, required);
+
+                    CHECK(copenMode == COpenMode::Write);
+                    CHECK(required.MustExist == true);
+                    CHECK(required.MustNotExist == false);
+                    CHECK(required.Create == false);
+                    CHECK(required.Delete == false);
+                    CHECK(required.StartAtEnd == false);
                 }
-            }
-
-            WHEN("State is constructed with invalid combination of flags the validty it should be set to invalid")
-            {
-                SECTION("No arguments is insufficient information")
+                SECTION("Flags Read, Override, StartAtEnd, CommitIndirectlyToDisk should result in Read and MustExist, Create, Delete, StartAtEnd actions")
                 {
-                    ConversionState state;
-                    state.SetCOpenModeAndValidty(copenMode, validty);
-                    REQUIRE(validty == OpenModeValidity::Invalid);
-                }
+                    ConversionState state(OpenModeFlag::Read, OpenModeFlag::Override, OpenModeFlag::StartAtEnd, WindowsOpenModeFlag::CommitIndirectlyToDisk);
+                    state.GetCopenModeAndRequiredActions(copenMode, required);
 
-                SECTION("Only Append is insufficient information")
-                {
-                    ConversionState state(OpenModeFlag::Append);
-                    state.SetCOpenModeAndValidty(copenMode, validty);
-                    REQUIRE(validty == OpenModeValidity::Invalid);
-                }
-
-                SECTION("Only MustExist is insufficient information")
-                {
-                    ConversionState state(OpenModeFlag::MustExist);
-                    state.SetCOpenModeAndValidty(copenMode, validty);
-                    REQUIRE(validty == OpenModeValidity::Invalid);
-                }
-
-                SECTION("Append and MustExist is insufficient information")
-                {
-                    ConversionState state(OpenModeFlag::Append, OpenModeFlag::MustExist);
-                    state.SetCOpenModeAndValidty(copenMode, validty);
-                    REQUIRE(validty == OpenModeValidity::Invalid);
+                    CHECK(copenMode == COpenMode::Read);
+                    CHECK(required.MustExist == true);
+                    CHECK(required.MustNotExist == false);
+                    CHECK(required.Create == true);
+                    CHECK(required.Delete == true);
+                    CHECK(required.StartAtEnd == true);
                 }
             }
 
-            WHEN("State is constructed with both MustExist and Append the validty should be set to unsupported")
+            WHEN("State is constructed with invalid combination of flags "
+                 "the action should contain both MustExist and MustNotExist (indicates error)")
             {
-                SECTION("Append, MustExist, and Write")
+                SECTION("Flags Read, Write, MustNotExist should result in Read and invaid actions")
                 {
-                    ConversionState state(OpenModeFlag::Append, OpenModeFlag::MustExist, OpenModeFlag::Write);
-                    state.SetCOpenModeAndValidty(copenMode, validty);
-                    REQUIRE(validty == OpenModeValidity::Unsupported);
-                }
+                    ConversionState state(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::MustNotExist);
+                    state.GetCopenModeAndRequiredActions(copenMode, required);
 
-                SECTION("Append, MustExist, and Read")
-                {
-                    ConversionState state(OpenModeFlag::Append, OpenModeFlag::MustExist, OpenModeFlag::Read);
-                    state.SetCOpenModeAndValidty(copenMode, validty);
-                    REQUIRE(validty == OpenModeValidity::Unsupported);
+                    CHECK(copenMode == COpenMode::Read);
+                    CHECK(required.MustExist == true);
+                    CHECK(required.MustNotExist == true);
                 }
-
-                SECTION("Append, MustExist, Read and Write")
+                SECTION("Flags Read, MustNotExist, CommitIndirectlyToDisk, Override should result in Read and invaid actions")
                 {
-                    ConversionState state(OpenModeFlag::Append, OpenModeFlag::MustExist, OpenModeFlag::Read, OpenModeFlag::Write);
-                    state.SetCOpenModeAndValidty(copenMode, validty);
-                    REQUIRE(validty == OpenModeValidity::Unsupported);
+                    ConversionState state(OpenModeFlag::Read, OpenModeFlag::MustNotExist, WindowsOpenModeFlag::CommitIndirectlyToDisk, OpenModeFlag::Override);
+                    state.GetCopenModeAndRequiredActions(copenMode, required);
+
+                    CHECK(copenMode == COpenMode::Read);
+                    CHECK(required.MustExist == true);
+                    CHECK(required.MustNotExist == true);
+                }
+                SECTION("Flags Write, Override, MustNotExist, DeleteAfterClose should result in Read and invaid actions")
+                {
+                    ConversionState state(OpenModeFlag::Write, OpenModeFlag::Override, OpenModeFlag::MustNotExist, WindowsOpenModeFlag::DeleteAfterClose);
+                    state.GetCopenModeAndRequiredActions(copenMode, required);
+
+                    CHECK(copenMode == COpenMode::Read);
+                    CHECK(required.MustExist == true);
+                    CHECK(required.MustNotExist == true);
                 }
             }
 
         }
 
-        TEMPLATE_TEST_CASE("[OpenModeConversionState] : GetCOpenModeStr should return the COpenMode represented in compile time string"
-                           "such that if converted to const char * it can be passed into fopen", "[OpenModeConversionState][GetCOpenModeStr]", OpenModeTestedTypes)
+
+        TEMPLATE_TEST_CASE("[ConversionState] : GetCOpenModeStr should return the COpenMode represented in compile time string"
+                           "such that if converted to const char * it can be passed into fopen", "[ConversionState][GetCOpenModeStr]", OpenModeTestedTypes)
         {
-            using ConversionState = OpenModeConversionState<TestType>;
+            using ConversionState = ConversionState<TestType>;
             using OpenModeString = typename ConversionState::OpenModeString;
             using Char8ConstexprStr = typename ConversionState::template ConstexprString<char8>;
 
-            WHEN("Provided with COpenMode::ReadMustExist the output should be \'r\'")
+            WHEN("Provided with COpenMode::Read the output should be \'r\'")
             {
-                const OpenModeString output = ConversionState::GetCOpenModeStr(COpenMode::ReadMustExist);
+                const OpenModeString output = ConversionState::GetCOpenModeStr(COpenMode::Read);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("r"));
                 REQUIRE(output == expected);
             }
@@ -609,35 +638,35 @@ namespace CIo::OpenModeTesting
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("w"));
                 REQUIRE(output == expected);
             }
-            WHEN("Provided with COpenMode::WriteAppend the output should be \'a\'")
+            WHEN("Provided with COpenMode::Append the output should be \'a\'")
             {
-                const OpenModeString output = ConversionState::GetCOpenModeStr(COpenMode::WriteAppend);
+                const OpenModeString output = ConversionState::GetCOpenModeStr(COpenMode::Append);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("a"));
                 REQUIRE(output == expected);
             }
-            WHEN("Provided with COpenMode::ReadWriteMustExist the output should be \'r+\'")
+            WHEN("Provided with COpenMode::ReadExtended the output should be \'r+\'")
             {
-                const OpenModeString output = ConversionState::GetCOpenModeStr(COpenMode::ReadWriteMustExist);
+                const OpenModeString output = ConversionState::GetCOpenModeStr(COpenMode::ReadExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("r+"));
                 REQUIRE(output == expected);
             }
-            WHEN("Provided with COpenMode::ReadWrite the output should be \'w+\'")
+            WHEN("Provided with COpenMode::WriteExtended the output should be \'w+\'")
             {
-                const OpenModeString output = ConversionState::GetCOpenModeStr(COpenMode::ReadWrite);
+                const OpenModeString output = ConversionState::GetCOpenModeStr(COpenMode::WriteExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("w+"));
                 REQUIRE(output == expected);
             }
-            WHEN("Provided with COpenMode::ReadWriteAppend the output should be \'a+\'")
+            WHEN("Provided with COpenMode::AppendExtended the output should be \'a+\'")
             {
-                const OpenModeString output = ConversionState::GetCOpenModeStr(COpenMode::ReadWriteAppend);
+                const OpenModeString output = ConversionState::GetCOpenModeStr(COpenMode::AppendExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("a+"));
                 REQUIRE(output == expected);
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenModeConversionState] : GetAdditionalModeStr should return additional mode string based on the flags passed into constructor", "[OpenModeConversionState][GetAdditionalModeStr]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[ConversionState] : GetAdditionalModeStr should return additional mode string based on the flags passed into constructor", "[ConversionState][GetAdditionalModeStr]", OpenModeTestedTypes)
         {
-            using ConversionState = OpenModeConversionState<TestType>;
+            using ConversionState = ConversionState<TestType>;
             using OpenModeString = typename ConversionState::OpenModeString;
             using Char8ConstexprStr = typename ConversionState::template ConstexprString<char8>;
 
@@ -648,94 +677,95 @@ namespace CIo::OpenModeTesting
                 {
                     ConversionState state(WindowsOpenModeFlag::Text);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("t"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("bt"));
 
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed only with OpenModeFlag::Binary the output should be \'b\'")
+                //TODO
+                WHEN("Cosntructed only with OpenModeFlag::Translated the output should be empty")
                 {
-                    ConversionState state(OpenModeFlag::Binary);
+                    ConversionState state(OpenModeFlag::Translated);
+                    OpenModeString output = state.GetAdditionalModeStr();
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr(""));
+
+                    REQUIRE(output == expected);
+                }
+                WHEN("Cosntructed only with OpenModeFlag::MustNotExist the output should be \'b\'")
+                {
+                    ConversionState state(OpenModeFlag::MustNotExist);
                     OpenModeString output = state.GetAdditionalModeStr();
                     OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("b"));
 
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed only with OpenModeFlag::MustNotExist the output should be \'x\'")
-                {
-                    ConversionState state(OpenModeFlag::MustNotExist);
-                    OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("x"));
-
-                    REQUIRE(output == expected);
-                }
-                WHEN("Cosntructed only with OpenModeFlag::CommitDirectlyToDisk the output should be \'c\'")
+                WHEN("Cosntructed only with OpenModeFlag::CommitDirectlyToDisk the output should be \'bc\'")
                 {
                     ConversionState state(WindowsOpenModeFlag::CommitDirectlyToDisk);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("c"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("bc"));
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed only with OpenModeFlag::CommitIndirectlyToDisk the output should be \'n\'")
+                WHEN("Cosntructed only with OpenModeFlag::CommitIndirectlyToDisk the output should be \'bn\'")
                 {
                     ConversionState state(WindowsOpenModeFlag::CommitIndirectlyToDisk);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("n"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("bn"));
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed only with OpenModeFlag::NotInheritedByChildProcess the output should be \'N\'")
+                WHEN("Cosntructed only with OpenModeFlag::NotInheritedByChildProcess the output should be \'bN\'")
                 {
                     ConversionState state(WindowsOpenModeFlag::NotInheritedByChildProcess);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("N"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("bN"));
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed only with OpenModeFlag::SequntialAccessOptimized the output should be \'S\'")
+                WHEN("Cosntructed only with OpenModeFlag::SequntialAccessOptimized the output should be \'bS\'")
                 {
                     ConversionState state(WindowsOpenModeFlag::SequntialAccessOptimized);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("S"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("bS"));
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed only with OpenModeFlag::RandomAccessOptimized the output should be \'R\'")
+                WHEN("Cosntructed only with OpenModeFlag::RandomAccessOptimized the output should be \'bR\'")
                 {
                     ConversionState state(WindowsOpenModeFlag::RandomAccessOptimized);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("R"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("bR"));
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed only with OpenModeFlag::IfPossibleNoFlushingToDisk the output should be \'T\'")
+                WHEN("Cosntructed only with OpenModeFlag::IfPossibleNoFlushingToDisk the output should be \'bT\'")
                 {
                     ConversionState state(WindowsOpenModeFlag::IfPossibleNoFlushingToDisk);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("T"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("bT"));
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed only with OpenModeFlag::DeleteAfterClose the output should be \'D\'")
+                WHEN("Cosntructed only with OpenModeFlag::DeleteAfterClose the output should be \'bD\'")
                 {
                     ConversionState state(WindowsOpenModeFlag::DeleteAfterClose);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("D"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("bD"));
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed only with OpenModeFlag::UnicodeEncoding the output should be \',css=UNICODE\'")
+                WHEN("Cosntructed only with OpenModeFlag::UnicodeEncoding the output should be \'b,css=UNICODE\'")
                 {
                     ConversionState state(WindowsOpenModeFlag::UnicodeEncoding);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr(",css=UNICODE"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("b,css=UNICODE"));
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed only with OpenModeFlag::Utf8Encoding the output should be \',css=UTF-8\'")
+                WHEN("Cosntructed only with OpenModeFlag::Utf8Encoding the output should be \'b,css=UTF-8\'")
                 {
                     ConversionState state(WindowsOpenModeFlag::Utf8Encoding);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr(",css=UTF-8"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("b,css=UTF-8"));
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed only with OpenModeFlag::Utf16Encoding the output should be \',css=UTF-16LE\'")
+                WHEN("Cosntructed only with OpenModeFlag::Utf16Encoding the output should be \'b,css=UTF-16LE\'")
                 {
                     ConversionState state(WindowsOpenModeFlag::Utf16Encoding);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr(",css=UTF-16LE"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("b,css=UTF-16LE"));
                     REQUIRE(output == expected);
                 }
             }
@@ -743,40 +773,40 @@ namespace CIo::OpenModeTesting
             WHEN("Contructed with a multiple additional flags the additional mode str should contain"
                  " all of the flag codes concatenated")
             {
-                WHEN("Cosntructed with flags Text, MustNotExist the output should be \'tx\'")
+                WHEN("Cosntructed with flags Text, RandomAccessOptimized, Translated the output should be \'tR\'")
                 {
-                    ConversionState state(WindowsOpenModeFlag::Text, OpenModeFlag::MustNotExist);
+                    ConversionState state(WindowsOpenModeFlag::Text, WindowsOpenModeFlag::RandomAccessOptimized, OpenModeFlag::Translated);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("tx"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("tR"));
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed with flags Binary, Utf8Encoding the output should be \'b,css=UTF-8\'")
+                WHEN("Cosntructed with flags Translated, Utf8Encoding the output should be \',css=UTF-8\'")
                 {
-                    ConversionState state(OpenModeFlag::Binary, WindowsOpenModeFlag::Utf8Encoding);
+                    ConversionState state(OpenModeFlag::Translated, WindowsOpenModeFlag::Utf8Encoding);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("b,css=UTF-8"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr(",css=UTF-8"));
                     REQUIRE(output == expected);
                 }
                 //The order shouldnt matter
-                WHEN("Cosntructed with flags Utf8Encoding, Binary the output should be \'b,css=UTF-8\'")
+                WHEN("Cosntructed with flags Translated, Utf8Encoding the output should be \',css=UTF-8\'")
                 {
-                    ConversionState state(WindowsOpenModeFlag::Utf8Encoding, OpenModeFlag::Binary);
+                    ConversionState state(WindowsOpenModeFlag::Utf8Encoding, OpenModeFlag::Translated);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("b,css=UTF-8"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr(",css=UTF-8"));
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed with flags NotInheritedByChildProcess, RandomAccessOptimized the output should be \'NR\'")
+                WHEN("Cosntructed with flags NotInheritedByChildProcess, RandomAccessOptimized the output should be \'bNR\'")
                 {
                     ConversionState state(WindowsOpenModeFlag::NotInheritedByChildProcess, WindowsOpenModeFlag::RandomAccessOptimized);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("NR"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("bNR"));
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed with flags MustNotExist, Text, CommitDirectlyToDisk, DeleteAfterClose the output should be \'txcD\'")
+                WHEN("Cosntructed with flags Text, CommitDirectlyToDisk, DeleteAfterClose the output should be \'btcD\'")
                 {
-                    ConversionState state(OpenModeFlag::MustNotExist, WindowsOpenModeFlag::Text, WindowsOpenModeFlag::CommitDirectlyToDisk, WindowsOpenModeFlag::DeleteAfterClose);
+                    ConversionState state(WindowsOpenModeFlag::Text, WindowsOpenModeFlag::CommitDirectlyToDisk, WindowsOpenModeFlag::DeleteAfterClose);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("txcD"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("btcD"));
                     REQUIRE(output == expected);
                 }
             }
@@ -784,30 +814,31 @@ namespace CIo::OpenModeTesting
             WHEN("Contructed with a additional flags and core flags the additional mode str should contain"
                  " only the additional flag codes cocatenated")
             {
-                WHEN("Cosntructed with flags Binary, DeleteAfterClose, Read, Write the output should be \'bD\'")
+                WHEN("Cosntructed with flags DeleteAfterClose, Read, Write the output should be \'bD\'")
                 {
-                    ConversionState state(OpenModeFlag::Binary, WindowsOpenModeFlag::DeleteAfterClose, OpenModeFlag::Read, OpenModeFlag::Write);
+                    ConversionState state(WindowsOpenModeFlag::DeleteAfterClose, OpenModeFlag::Read, OpenModeFlag::Write);
                     OpenModeString output = state.GetAdditionalModeStr();
                     OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("bD"));
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed with flags Binary, Read, DeleteAfterClose, Append the output should be \'bD\'")
+                WHEN("Cosntructed with flags Read, DeleteAfterClose, Append the output should be \'bD\'")
                 {
-                    ConversionState state(OpenModeFlag::Binary, OpenModeFlag::Read, WindowsOpenModeFlag::DeleteAfterClose, OpenModeFlag::Append);
+                    ConversionState state(OpenModeFlag::Read, WindowsOpenModeFlag::DeleteAfterClose, OpenModeFlag::StartAtEnd);
                     OpenModeString output = state.GetAdditionalModeStr();
                     OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("bD"));
                     REQUIRE(output == expected);
                 }
-                WHEN("Cosntructed with flags Binary, Write, DeleteAfterClose, MustExist the output should be \'bD\'")
+                WHEN("Cosntructed with flags Translated, RandomAccessOptimized, Write, DeleteAfterClose, MustExist the output should be \'bD\'")
                 {
-                    ConversionState state(OpenModeFlag::Binary, OpenModeFlag::Write, WindowsOpenModeFlag::DeleteAfterClose, OpenModeFlag::MustExist);
+                    ConversionState state(OpenModeFlag::Translated, WindowsOpenModeFlag::RandomAccessOptimized, OpenModeFlag::Write, WindowsOpenModeFlag::DeleteAfterClose);
                     OpenModeString output = state.GetAdditionalModeStr();
-                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("bD"));
+                    OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("RD"));
                     REQUIRE(output == expected);
                 }
             }
         }
     }
+
 
     namespace OpenModeClassTesting
     {
@@ -831,18 +862,18 @@ namespace CIo::OpenModeTesting
        {
             const OpenMode mode;
             REQUIRE(mode.IsValid() == false);
-            REQUIRE(mode.IsSupported() == true);
         }
 
+        /*
         TEMPLATE_TEST_CASE("[OpenMode] : Constructor with COpenMode should crete always valid openmode with appropriate OpenModeString", "[OpenMode][Constructor]", OpenModeTestedTypes)
         {
             using OpenMode = BasicOpenMode<TestType>;
             using OpenModeString = typename OpenMode::OpenModeString;
             using Char8ConstexprStr = typename OpenMode::template ConstexprString<char8>;
 
-            WHEN("Provided with COpenMode::ReadMustExist the OpenModeStr should be \'r\'")
+            WHEN("Provided with COpenMode::Read the OpenModeStr should be \'r\'")
             {
-                const OpenMode mode(COpenMode::ReadMustExist);
+                const OpenMode mode(COpenMode::Read);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("r"));
 
                 CHECK(mode.IsValid() == true);
@@ -856,39 +887,40 @@ namespace CIo::OpenModeTesting
                 CHECK(mode.IsValid() == true);
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
-            WHEN("Provided with COpenMode::WriteAppend the OpenModeStr should be \'a\'")
+            WHEN("Provided with COpenMode::Append the OpenModeStr should be \'a\'")
             {
-                const OpenMode mode(COpenMode::WriteAppend);
+                const OpenMode mode(COpenMode::Append);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("a"));
 
                 CHECK(mode.IsValid() == true);
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
-            WHEN("Provided with COpenMode::ReadWriteMustExist the OpenModeStr should be \'r+\'")
+            WHEN("Provided with COpenMode::ReadExtended the OpenModeStr should be \'r+\'")
             {
-                const OpenMode mode(COpenMode::ReadWriteMustExist);
+                const OpenMode mode(COpenMode::ReadExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("r+"));
 
                 CHECK(mode.IsValid() == true);
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
-            WHEN("Provided with COpenMode::ReadWrite the OpenModeStr should be \'w+\'")
+            WHEN("Provided with COpenMode::WriteExtended the OpenModeStr should be \'w+\'")
             {
-                const OpenMode mode(COpenMode::ReadWrite);
+                const OpenMode mode(COpenMode::WriteExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("w+"));
 
                 CHECK(mode.IsValid() == true);
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
-            WHEN("Provided with COpenMode::ReadWriteAppend the OpenModeStr should be \'a+\'")
+            WHEN("Provided with COpenMode::AppendExtended the OpenModeStr should be \'a+\'")
             {
-                const OpenMode mode(COpenMode::ReadWriteAppend);
+                const OpenMode mode(COpenMode::AppendExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("a+"));
 
                 CHECK(mode.IsValid() == true);
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
         }
+
 
         TEMPLATE_TEST_CASE("[OpenMode] : AssignCOpenMode should change the openmode to always valid openmode with appropriate OpenModeString", "[OpenMode][AssignCOpenMode]", OpenModeTestedTypes)
         {
@@ -898,9 +930,9 @@ namespace CIo::OpenModeTesting
 
             OpenMode mode;
 
-            WHEN("Provided with COpenMode::ReadMustExist the OpenModeStr should be \'r\'")
+            WHEN("Provided with COpenMode::Read the OpenModeStr should be \'r\'")
             {
-                mode.AssignCOpenMode(COpenMode::ReadMustExist);
+                mode.AssignCOpenMode(COpenMode::Read);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("r"));
 
                 CHECK(mode.IsValid() == true);
@@ -914,39 +946,40 @@ namespace CIo::OpenModeTesting
                 CHECK(mode.IsValid() == true);
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
-            WHEN("Provided with COpenMode::WriteAppend the OpenModeStr should be \'a\'")
+            WHEN("Provided with COpenMode::Append the OpenModeStr should be \'a\'")
             {
-                mode.AssignCOpenMode(COpenMode::WriteAppend);
+                mode.AssignCOpenMode(COpenMode::Append);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("a"));
 
                 CHECK(mode.IsValid() == true);
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
-            WHEN("Provided with COpenMode::ReadWriteMustExist the OpenModeStr should be \'r+\'")
+            WHEN("Provided with COpenMode::ReadExtended the OpenModeStr should be \'r+\'")
             {
-                mode.AssignCOpenMode(COpenMode::ReadWriteMustExist);
+                mode.AssignCOpenMode(COpenMode::ReadExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("r+"));
 
                 CHECK(mode.IsValid() == true);
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
-            WHEN("Provided with COpenMode::ReadWrite the OpenModeStr should be \'w+\'")
+            WHEN("Provided with COpenMode::WriteExtended the OpenModeStr should be \'w+\'")
             {
-                mode.AssignCOpenMode(COpenMode::ReadWrite);
+                mode.AssignCOpenMode(COpenMode::WriteExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("w+"));
 
                 CHECK(mode.IsValid() == true);
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
-            WHEN("Provided with COpenMode::ReadWriteAppend the OpenModeStr should be \'a+\'")
+            WHEN("Provided with COpenMode::AppendExtended the OpenModeStr should be \'a+\'")
             {
-                mode.AssignCOpenMode(COpenMode::ReadWriteAppend);
+                mode.AssignCOpenMode(COpenMode::AppendExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("a+"));
 
                 CHECK(mode.IsValid() == true);
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
         }
+
 
         TEMPLATE_TEST_CASE("[OpenMode] : Constructor called with individual OpenModeFlags should create a open mode according to the flags passed", "[OpenMode][Constructor]", OpenModeTestedTypes)
         {
@@ -971,7 +1004,6 @@ namespace CIo::OpenModeTesting
 
                     CHECK(output == expected);
                     CHECK(mode.IsValid() == true);
-                    CHECK(mode.IsSupported() == true);
                 }
                 WHEN("Provided with flags Read, Write, MustExist, Binary the OpenModeStr should be \'r+b\'"
                      " and it should be valid")
@@ -987,7 +1019,6 @@ namespace CIo::OpenModeTesting
 
                     CHECK(output == expected);
                     CHECK(mode.IsValid() == true);
-                    CHECK(mode.IsSupported() == true);
                 }
                 WHEN("Provided with flags Write, MustNotExist, CommitDirectlyToDisk, SequntialAccessOptimized the OpenModeStr should be \'wxcS\'"
                      " and it should be valid")
@@ -1003,7 +1034,6 @@ namespace CIo::OpenModeTesting
 
                     CHECK(output == expected);
                     CHECK(mode.IsValid() == true);
-                    CHECK(mode.IsSupported() == true);
                 }
                 WHEN("Provided with flags Write, MustNotExist, CommitDirectlyToDisk, SequntialAccessOptimized the OpenModeStr should be \'w+ND,css=UTF-8\'"
                      " and it should be valid")
@@ -1019,41 +1049,35 @@ namespace CIo::OpenModeTesting
 
                     CHECK(output == expected);
                     CHECK(mode.IsValid() == true);
-                    CHECK(mode.IsSupported() == true);
                 }
             }
 
-            WHEN("Called with conflicting flags (according to OpenModeConversionState::AreAreFlagsConflicting) it should construct a invalid openmode")
+            WHEN("Called with conflicting flags (according to ConversionState::AreAreFlagsConflicting) it should construct a invalid openmode")
             {
                 WHEN("Provided with flags Read, MustExist, MustNotExist it should be invalid")
                 {
-                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::MustExist, OpenModeFlag::MustNotExist);
+                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::MustNotExist);
                     CHECK(mode.IsValid() == false);
-                    CHECK(mode.IsSupported() == true);
                 }
-                WHEN("Provided with flags Read, Write, Text, Binary it should be invalid")
+                WHEN("Provided with flags Read, Write, Text it should be invalid")
                 {
-                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Write, WindowsOpenModeFlag::Text, OpenModeFlag::Binary);
+                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Write, WindowsOpenModeFlag::Text);
                     CHECK(mode.IsValid() == false);
-                    CHECK(mode.IsSupported() == true);
                 }
                 WHEN("Provided with flags Write, UnicodeEncoding, Utf8Encoding it should be invalid")
                 {
                     const OpenMode mode(OpenModeFlag::Write, WindowsOpenModeFlag::UnicodeEncoding, WindowsOpenModeFlag::Utf8Encoding);
                     CHECK(mode.IsValid() == false);
-                    CHECK(mode.IsSupported() == true);
                 }
                 WHEN("Provided with flags Write, Append, CommitDirectlyToDisk, CommitIndirectlyToDisk it should be invalid")
                 {
-                    const OpenMode mode(OpenModeFlag::Write, OpenModeFlag::Append, WindowsOpenModeFlag::CommitDirectlyToDisk, WindowsOpenModeFlag::CommitIndirectlyToDisk);
+                    const OpenMode mode(OpenModeFlag::Write, OpenModeFlag::StartAtEnd, WindowsOpenModeFlag::CommitDirectlyToDisk, WindowsOpenModeFlag::CommitIndirectlyToDisk);
                     CHECK(mode.IsValid() == false);
-                    CHECK(mode.IsSupported() == true);
                 }
                 WHEN("Provided with flags Read, SequntialAccessOptimized, RandomAccessOptimized it should be invalid")
                 {
                     const OpenMode mode(OpenModeFlag::Read, WindowsOpenModeFlag::SequntialAccessOptimized, WindowsOpenModeFlag::RandomAccessOptimized);
                     CHECK(mode.IsValid() == false);
-                    CHECK(mode.IsSupported() == true);
                 }
             }
 
@@ -1063,59 +1087,14 @@ namespace CIo::OpenModeTesting
                 {
                     const OpenMode mode;
                     CHECK(mode.IsValid() == false);
-                    CHECK(mode.IsSupported() == true);
-                }
-                WHEN("Provided with flags MustNotExist it should be invalid")
-                {
-                    const OpenMode mode(OpenModeFlag::MustNotExist);
-                    CHECK(mode.IsValid() == false);
-                    CHECK(mode.IsSupported() == true);
-                }
-                WHEN("Provided with flags Append, Text it should be invalid")
-                {
-                    const OpenMode mode(OpenModeFlag::Append, WindowsOpenModeFlag::Text);
-                    CHECK(mode.IsValid() == false);
-                    CHECK(mode.IsSupported() == true);
-                }
-                WHEN("Provided with flags MustExist, UnicodeEncoding, Binary, CommitDirectlyToDisk it should be invalid")
-                {
-                    const OpenMode mode(OpenModeFlag::MustExist, WindowsOpenModeFlag::UnicodeEncoding, OpenModeFlag::Binary, WindowsOpenModeFlag::CommitDirectlyToDisk);
-                    CHECK(mode.IsValid() == false);
-                    CHECK(mode.IsSupported() == true);
-                }
-                WHEN("Provided with flags Append, MustExist, DeleteAfterClose, IfPossibleNoFlushingToDisk it should be invalid")
-                {
-                    const OpenMode mode(OpenModeFlag::Append, OpenModeFlag::MustExist, WindowsOpenModeFlag::DeleteAfterClose, WindowsOpenModeFlag::IfPossibleNoFlushingToDisk);
-                    CHECK(mode.IsValid() == false);
-                    CHECK(mode.IsSupported() == true);
-                }
-            }
-
-            WHEN("Called with usnupported combination of flags (Append, MustExist together alongside Write or Read) it should construct an unsupported openmode")
-            {
-                WHEN("Provided with flags Read, MustExist, Append, CommitDirectlyToDisk it should be invalid")
-                {
-                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::MustExist, OpenModeFlag::Append, WindowsOpenModeFlag::CommitDirectlyToDisk);
-                    CHECK(mode.IsValid() == false);
-                    CHECK(mode.IsSupported() == false);
-                }
-                WHEN("Provided with flags Read, MustExist, Append, CommitDirectlyToDisk it should be invalid")
-                {
-                    const OpenMode mode(OpenModeFlag::Write, OpenModeFlag::MustExist, WindowsOpenModeFlag::UnicodeEncoding, OpenModeFlag::Append);
-                    CHECK(mode.IsValid() == false);
-                    CHECK(mode.IsSupported() == false);
-                }
-                WHEN("Provided with flags Read, MustExist, Append, CommitDirectlyToDisk it should be invalid")
-                {
-                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Write,  OpenModeFlag::MustExist, OpenModeFlag::Append, WindowsOpenModeFlag::IfPossibleNoFlushingToDisk);
-                    CHECK(mode.IsValid() == false);
-                    CHECK(mode.IsSupported() == false);
                 }
             }
         }
+*/
 
         TEMPLATE_TEST_CASE("[OpenMode] : IsValid shoudl return true if the openmode is valid (fit to open a file)", "[OpenMode][IsValid]", OpenModeTestedTypes)
         {
+            using OpenMode = BasicOpenMode<TestType>;
             WHEN("A constructed mode is valid IsValid returns true")
             {
                 const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Write);
@@ -1123,34 +1102,11 @@ namespace CIo::OpenModeTesting
             }
             WHEN("A constructed mode is invalid IsValid returns false")
             {
-                const OpenMode mode(OpenModeFlag::MustExist, WindowsOpenModeFlag::Text, OpenModeFlag::MustNotExist);
-                REQUIRE(mode.IsValid() == false);
-            }
-            WHEN("A constructed mode is unsupported IsValid returns false")
-            {
-                const OpenMode mode(OpenModeFlag::Write, OpenModeFlag::MustExist, OpenModeFlag::Append);
+                const OpenMode mode(WindowsOpenModeFlag::Text, OpenModeFlag::MustNotExist);
                 REQUIRE(mode.IsValid() == false);
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenMode] : IsSupported should return true if the openmode is supported (does not have to valid)", "[OpenMode][IsSupported]", OpenModeTestedTypes)
-        {
-            WHEN("A constructed mode is valid IsSupported returns true")
-            {
-                const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Write);
-                REQUIRE(mode.IsSupported() == true);
-            }
-            WHEN("A constructed mode is invalid IsSupported returns true")
-            {
-                const OpenMode mode(OpenModeFlag::MustExist, WindowsOpenModeFlag::Text, OpenModeFlag::MustNotExist);
-                REQUIRE(mode.IsSupported() == true);
-            }
-            WHEN("A constructed mode is unsupported IsSupported returns false")
-            {
-                const OpenMode mode(OpenModeFlag::Write, OpenModeFlag::MustExist, OpenModeFlag::Append);
-                REQUIRE(mode.IsSupported() == false);
-            }
-        }
 
         TEMPLATE_TEST_CASE("[OpenMode] : GetOpenModeString should return a copy of the constexpr openmode string", "[OpenMode][GetOpenModeString]", OpenModeTestedTypes)
         {
@@ -1161,8 +1117,120 @@ namespace CIo::OpenModeTesting
             const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Write);
             REQUIRE(mode.IsValid() == true);
 
-            const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("w+"));
+            const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("r+b"));
             REQUIRE(mode.GetOpenModeString() == expected);
+        }
+
+        TEMPLATE_TEST_CASE("[OpenMode] : GetCOpenMode shoudl return the underlying COpenMode", "[OpenMode][IsValid]", OpenModeTestedTypes)
+        {
+            using OpenMode = BasicOpenMode<TestType>;
+            WHEN("A constructed mode is valid GetCOpenMode returns the used COpenMode")
+            {
+                {
+                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::Override);
+                    REQUIRE(mode.GetCOpenMode() == COpenMode::WriteExtended);
+                }
+                {
+                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Create);
+                    REQUIRE(mode.GetCOpenMode() == COpenMode::Read);
+                }
+                {
+                    const OpenMode mode(OpenModeFlag::Write, OpenModeFlag::StartAtEnd);
+                    REQUIRE(mode.GetCOpenMode() == COpenMode::ReadExtended);
+                }
+
+            }
+            WHEN("A constructed mode is invalid GetCOpenMode returns ReadExtended (default COpenMode)")
+            {
+                const OpenMode mode(WindowsOpenModeFlag::Text, OpenModeFlag::MustNotExist);
+                REQUIRE(mode.GetCOpenMode() == COpenMode::ReadExtended);
+            }
+        }
+
+        TEMPLATE_TEST_CASE("[OpenMode] : GetEnabledActions shoudl return the actions enebled on the file opened with this openmode", "[OpenMode][IsValid]", OpenModeTestedTypes)
+        {
+            using OpenMode = BasicOpenMode<TestType>;
+            WHEN("A constructed mode is valid GetEnabledActions returns the enebled actions")
+            {
+                {
+                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::Override);
+                    REQUIRE(mode.GetEnabledActions() == EnabledActions::ReadWrite);
+                }
+                {
+                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Create);
+                    REQUIRE(mode.GetEnabledActions() == EnabledActions::Read);
+                }
+                {
+                    const OpenMode mode(OpenModeFlag::Write, OpenModeFlag::StartAtEnd);
+                    REQUIRE(mode.GetEnabledActions() == EnabledActions::Write);
+                }
+                {
+                    const OpenMode mode(OpenModeFlag::StartAtEnd, OpenModeFlag::Create);
+                    REQUIRE(mode.GetEnabledActions() == EnabledActions::None);
+                }
+
+            }
+            WHEN("A constructed mode is invalid GetEnabledActions returns Closed")
+            {
+                const OpenMode mode(WindowsOpenModeFlag::Text, OpenModeFlag::MustNotExist);
+                REQUIRE(mode.GetEnabledActions() == EnabledActions::Closed);
+            }
+        }
+
+        TEMPLATE_TEST_CASE("[OpenMode] : GetRequiredActions shoudl return the actions taht need to be performed when opening a file with this openmode", "[OpenMode][IsValid]", OpenModeTestedTypes)
+        {
+            using OpenMode = BasicOpenMode<TestType>;
+            RequiredActions required;
+            WHEN("A constructed mode is valid GetRequiredActions returns the required actions")
+            {
+                {
+                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::Override);
+                    required = mode.GetRequiredActions();
+                    CHECK(required.MustExist == true);
+                    CHECK(required.MustNotExist == false);
+                    CHECK(required.Create == false);
+                    CHECK(required.Delete == false);
+                    CHECK(required.StartAtEnd == false);
+                }
+                {
+                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Create);
+                    required = mode.GetRequiredActions();
+                    CHECK(required.MustExist == false);
+                    CHECK(required.MustNotExist == false);
+                    CHECK(required.Create == true);
+                    CHECK(required.Delete == false);
+                    CHECK(required.StartAtEnd == false);
+                }
+                {
+                    const OpenMode mode(OpenModeFlag::Write, OpenModeFlag::StartAtEnd);
+                    required = mode.GetRequiredActions();
+                    CHECK(required.MustExist == true);
+                    CHECK(required.MustNotExist == false);
+                    CHECK(required.Create == false);
+                    CHECK(required.Delete == false);
+                    CHECK(required.StartAtEnd == true);
+                }
+                {
+                    const OpenMode mode(OpenModeFlag::StartAtEnd, OpenModeFlag::Create);
+                    required = mode.GetRequiredActions();
+                    CHECK(required.MustExist == false);
+                    CHECK(required.MustNotExist == false);
+                    CHECK(required.Create == true);
+                    CHECK(required.Delete == false);
+                    CHECK(required.StartAtEnd == true);
+                }
+
+            }
+            WHEN("A constructed mode is invalid GetRequiredActions returns no actions")
+            {
+                const OpenMode mode(WindowsOpenModeFlag::Text, OpenModeFlag::MustNotExist);
+                required = mode.GetRequiredActions();
+                CHECK(required.MustExist == false);
+                CHECK(required.MustNotExist == false);
+                CHECK(required.Create == false);
+                CHECK(required.Delete == false);
+                CHECK(required.StartAtEnd == false);
+            }
         }
 
         TEMPLATE_TEST_CASE("[OpenMode] : operator StringView<OsCharType> should return a stringview conatining just the openmode", "[OpenMode][operator StringView<OsCharType>]", OpenModeTestedTypes)
@@ -1176,20 +1244,20 @@ namespace CIo::OpenModeTesting
             REQUIRE(mode.IsValid() == true);
 
             const OsStringView output = mode;
-            const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("w+"));
+            const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("r+b"));
             const OsStringView expectedView = expected;
             REQUIRE(output == expectedView);
         }
 
         TEMPLATE_TEST_CASE("[OpenMode] : Copy constructor should construct a copy of the provided open mode", "[OpenMode][Copy constructor]", OpenModeTestedTypes)
         {
+            using OpenMode = BasicOpenMode<TestType>;
             WHEN("Constructing from an empty invalid openmode the result should be empty and invalid aswell")
             {
                 const OpenMode mode;
                 const OpenMode constructed(mode);
 
                 REQUIRE(constructed.IsValid() == false);
-                REQUIRE(constructed.IsSupported() == true);
             }
             WHEN("Constructing from an valid openmode the result should be valid and have the same OpenModeStr")
             {
@@ -1198,20 +1266,12 @@ namespace CIo::OpenModeTesting
 
                 REQUIRE(constructed.GetOpenModeString() == mode.GetOpenModeString());
                 REQUIRE(constructed.IsValid() == true);
-                REQUIRE(constructed.IsSupported() == true);
-            }
-            WHEN("Constructing from an unsupported openmode the result should be unsupported aswell")
-            {
-                const OpenMode mode(OpenModeFlag::Write, OpenModeFlag::MustExist, OpenModeFlag::Append);
-                const OpenMode constructed(mode);
-
-                REQUIRE(constructed.IsValid() == false);
-                REQUIRE(constructed.IsSupported() == false);
             }
         }
 
         TEMPLATE_TEST_CASE("[OpenMode] : Move constructor should construct a copy of the provided open mode", "[OpenMode][Move constructor]", OpenModeTestedTypes)
         {
+            using OpenMode = BasicOpenMode<TestType>;
             WHEN("Constructing from an empty invalid openmode the result should be empty and invalid aswell")
             {
                 OpenMode mode;
@@ -1219,12 +1279,10 @@ namespace CIo::OpenModeTesting
                 const OpenMode constructed(std::move(mode));
 
                 REQUIRE(constructed.IsValid() == false);
-                REQUIRE(constructed.IsSupported() == true);
 
                 //The result should not chnage
                 REQUIRE(mode.GetOpenModeString() == beforeStr);
                 REQUIRE(mode.IsValid() == false);
-                REQUIRE(mode.IsSupported() == true);
             }
             WHEN("Constructing from an valid openmode the result should be valid and have the same OpenModeStr")
             {
@@ -1234,31 +1292,16 @@ namespace CIo::OpenModeTesting
 
                 REQUIRE(constructed.GetOpenModeString() == mode.GetOpenModeString());
                 REQUIRE(constructed.IsValid() == true);
-                REQUIRE(constructed.IsSupported() == true);
 
                 //The result should not chnage
                 REQUIRE(mode.GetOpenModeString() == beforeStr);
                 REQUIRE(mode.IsValid() == true);
-                REQUIRE(mode.IsSupported() == true);
-            }
-            WHEN("Constructing from an unsupported openmode the result should be unsupported aswell")
-            {
-                OpenMode mode(OpenModeFlag::Write, OpenModeFlag::MustExist, OpenModeFlag::Append);
-                const auto beforeStr = mode.GetOpenModeString();
-                const OpenMode constructed(std::move(mode));
-
-                REQUIRE(constructed.IsValid() == false);
-                REQUIRE(constructed.IsSupported() == false);
-
-                //The result should not chnage
-                REQUIRE(mode.GetOpenModeString() == beforeStr);
-                REQUIRE(mode.IsValid() == false);
-                REQUIRE(mode.IsSupported() == false);
             }
         }
 
         TEMPLATE_TEST_CASE("[OpenMode] : Copy assigning to OpenMode should copy the provided OpenMode", "[OpenMode][Copy assignment]", OpenModeTestedTypes)
         {
+            using OpenMode = BasicOpenMode<TestType>;
             WHEN("Assigning from an empty invalid openmode the result should be empty and invalid aswell")
             {
                 const OpenMode mode;
@@ -1267,7 +1310,6 @@ namespace CIo::OpenModeTesting
                 assigned = mode;
 
                 REQUIRE(assigned.IsValid() == false);
-                REQUIRE(assigned.IsSupported() == true);
             }
             WHEN("Assigning from an valid openmode the result should be valid and have the same OpenModeStr")
             {
@@ -1278,22 +1320,12 @@ namespace CIo::OpenModeTesting
 
                 REQUIRE(assigned.GetOpenModeString() == mode.GetOpenModeString());
                 REQUIRE(assigned.IsValid() == true);
-                REQUIRE(assigned.IsSupported() == true);
-            }
-            WHEN("Assigning from an unsupported openmode the result should be unsupported aswell")
-            {
-                const OpenMode mode(OpenModeFlag::Write, OpenModeFlag::MustExist, OpenModeFlag::Append);
-                OpenMode assigned;
-
-                assigned = mode;
-
-                REQUIRE(assigned.IsValid() == false);
-                REQUIRE(assigned.IsSupported() == false);
             }
         }
 
         TEMPLATE_TEST_CASE("[OpenMode] : Move assigning to OpenMode should copy the provided OpenMode", "[OpenMode][Move assignment]", OpenModeTestedTypes)
         {
+            using OpenMode = BasicOpenMode<TestType>;
             WHEN("Assigning from an empty invalid openmode the result should be empty and invalid aswell")
             {
                 OpenMode mode;
@@ -1303,12 +1335,10 @@ namespace CIo::OpenModeTesting
                 assigned = std::move(mode);
 
                 REQUIRE(assigned.IsValid() == false);
-                REQUIRE(assigned.IsSupported() == true);
 
                 //The result should not chnage
                 REQUIRE(mode.GetOpenModeString() == beforeStr);
                 REQUIRE(mode.IsValid() == false);
-                REQUIRE(mode.IsSupported() == true);
             }
             WHEN("Assigning from an valid openmode the result should be valid and have the same OpenModeStr")
             {
@@ -1320,32 +1350,15 @@ namespace CIo::OpenModeTesting
 
                 REQUIRE(assigned.GetOpenModeString() == mode.GetOpenModeString());
                 REQUIRE(assigned.IsValid() == true);
-                REQUIRE(assigned.IsSupported() == true);
 
                 //The result should not chnage
                 REQUIRE(mode.GetOpenModeString() == beforeStr);
                 REQUIRE(mode.IsValid() == true);
-                REQUIRE(mode.IsSupported() == true);
-            }
-            WHEN("Assigning from an unsupported openmode the result should be unsupported aswell")
-            {
-                OpenMode mode(OpenModeFlag::Write, OpenModeFlag::MustExist, OpenModeFlag::Append);
-                OpenMode assigned;
-                const auto beforeStr = mode.GetOpenModeString();
-
-                assigned = std::move(mode);
-
-                REQUIRE(assigned.IsValid() == false);
-                REQUIRE(assigned.IsSupported() == false);
-
-                //The result should not chnage
-                REQUIRE(mode.GetOpenModeString() == beforeStr);
-                REQUIRE(mode.IsValid() == false);
-                REQUIRE(mode.IsSupported() == false);
             }
 
         }
     }
+
 }
 
 #endif // OPENMODETESTING_H
