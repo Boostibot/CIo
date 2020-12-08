@@ -2,7 +2,7 @@
 #define CSTDIOADAPTER_H
 
 #include "OsSupport.h"
-#include "AuxiliaryTypes.h"
+#include "File.h"
 
 namespace cio
 {
@@ -10,14 +10,14 @@ namespace cio
     {
             using CharType = char8;
 
-        public:
+        protected:
             static inline auto fopen(const CharType * filename, const CharType * mode)
             {
-                return CompilerSupport::fopen(filename, mode);
+                return OsSupport::fopen(filename, mode);
             }
             static inline auto freopen(const CharType * filename, const CharType * mode)
             {
-                return CompilerSupport::fopen(filename, mode);
+                return OsSupport::fopen(filename, mode);
             }
             static inline auto fclose(CFile PTR stream)
             {
@@ -37,11 +37,11 @@ namespace cio
             }
             static inline auto ftell(CFile PTR stream)
             {
-                return CompilerSupport::ftell(stream);
+                return OsSupport::ftell(stream);
             }
             static inline auto fseek(CFile PTR stream, const Offset offset, const Origin origin)
             {
-                return CompilerSupport::fseek(stream, offset, static_cast<COrigin>(origin));
+                return OsSupport::fseek(stream, offset, static_cast<COrigin>(origin));
             }
             static inline auto rewind(CFile PTR stream)
             {
@@ -76,6 +76,10 @@ namespace cio
                 return std::remove(filename);
             }
     };
+
+    using FileManager = Internal::UnadaptedFileManager<CstdioAdapter>;
+    using UnsafeFile = Internal::UnadaptedUnsafeFile<CstdioAdapter>;
+    using File = Internal::UnadaptedFile<CstdioAdapter>;
 }
 
 #endif // CSTDIOADAPTER_H

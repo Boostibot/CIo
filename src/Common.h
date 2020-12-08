@@ -29,6 +29,16 @@ namespace cio
     using char16 = char16_t;
     using char32 = char32_t;
     using charW  = wchar_t;
+
+    using c8 = char8;
+    using c16 = char16;
+    using c32 = char32;
+    using cW = charW;
+
+    using b8 = bool;
+
+    using d32 = float;
+    using d64 = double;
 }
 
 #endif // COMMON_H

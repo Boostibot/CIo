@@ -19,6 +19,8 @@ HEADERS += \
     ../src/UnsafeFile.h \
         CIo/FileManager.h \
         CIo/FileManager_TestingUtilities.h \
+    CIo/MockAdaptor.h \
+    CIo/NewUnsafeFile.h \
     CIo/Temp.h \
         CIo/UseExamples.h \
         CIo/ConstexprString.h \

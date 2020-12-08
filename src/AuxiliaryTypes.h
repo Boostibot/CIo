@@ -14,7 +14,7 @@ namespace cio
     using COrigin         = i32;
     using CBufferingMode  = i32;
 
-    using Offset    = CompilerSupport::OffsetType;
+    using Offset    = OsSupport::OffsetType;
     using Position  = std::fpos_t;
     using Size      = std::size_t;
     using FileSize  = Offset;

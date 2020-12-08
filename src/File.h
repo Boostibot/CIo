@@ -65,7 +65,7 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed: return Position();
+                    case EnabledOperations::Closed: return Position();
                     default:                     return GetUnsafe().GetPos();
                 }
             }
@@ -74,7 +74,7 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed: return false;
+                    case EnabledOperations::Closed: return false;
                     default:                     return GetUnsafe().SavePos(pos);
                 }
             }
@@ -82,7 +82,7 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed: return false;
+                    case EnabledOperations::Closed: return false;
                     default:                     return GetUnsafe().RestorePos(pos);
                 }
             }
@@ -91,7 +91,7 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed: return ThisType::ErrorPos;
+                    case EnabledOperations::Closed: return ThisType::ErrorPos;
                     default:                     return GetUnsafe().GetOffset();
                 }
             }
@@ -100,7 +100,7 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed: return false;
+                    case EnabledOperations::Closed: return false;
                     default:                     return GetUnsafe().MoveTo(offset, from);
                 }
             }
@@ -108,7 +108,7 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed: return;
+                    case EnabledOperations::Closed: return;
                     default:                     return GetUnsafe().MoveToBeggining();
                 }
             }
@@ -116,7 +116,7 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed: return;
+                    case EnabledOperations::Closed: return;
                     default:                     return GetUnsafe().MoveToEnd();
                 }
             }
@@ -124,7 +124,7 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed: return false;
+                    case EnabledOperations::Closed: return false;
                     default:                     return GetUnsafe().MoveBy(offset);
                 }
             }
@@ -135,9 +135,9 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed:
-                    case EnabledActions::None:
-                    case EnabledActions::Write:  return false;
+                    case EnabledOperations::Closed:
+                    case EnabledOperations::None:
+                    case EnabledOperations::Write:  return false;
                     default:                     return GetUnsafe().Read(ptrToBuffer, count);
                 }
             }
@@ -147,9 +147,9 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed:
-                    case EnabledActions::None:
-                    case EnabledActions::Write:  return 0;
+                    case EnabledOperations::Closed:
+                    case EnabledOperations::None:
+                    case EnabledOperations::Write:  return 0;
                     default:                     return GetUnsafe().ReadAndCount(ptrToBuffer, count);
                 }
             }
@@ -159,9 +159,9 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed:
-                    case EnabledActions::None:
-                    case EnabledActions::Write:  return false;
+                    case EnabledOperations::Closed:
+                    case EnabledOperations::None:
+                    case EnabledOperations::Write:  return false;
                     default:                     return GetUnsafe().ReadObject(object);
                 }
             }
@@ -171,9 +171,9 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed:
-                    case EnabledActions::None:
-                    case EnabledActions::Write:  return false;
+                    case EnabledOperations::Closed:
+                    case EnabledOperations::None:
+                    case EnabledOperations::Write:  return false;
                     default:                     return GetUnsafe().ReadString(output);
                 }
             }
@@ -185,9 +185,9 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed:
-                    case EnabledActions::None:
-                    case EnabledActions::Read:  return false;
+                    case EnabledOperations::Closed:
+                    case EnabledOperations::None:
+                    case EnabledOperations::Read:  return false;
                     default:                    return GetUnsafe().Write(ptrToData, count);
                 }
             }
@@ -196,9 +196,9 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed:
-                    case EnabledActions::None:
-                    case EnabledActions::Read:  return 0;
+                    case EnabledOperations::Closed:
+                    case EnabledOperations::None:
+                    case EnabledOperations::Read:  return 0;
                     default:                    return GetUnsafe().WriteAndCount(ptrToData, count);
                 }
             }
@@ -207,9 +207,9 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed:
-                    case EnabledActions::None:
-                    case EnabledActions::Read:  return false;
+                    case EnabledOperations::Closed:
+                    case EnabledOperations::None:
+                    case EnabledOperations::Read:  return false;
                     default:                    return GetUnsafe().WriteObject(object);
                 }
             }
@@ -220,9 +220,9 @@ namespace cio::Internal
             {
                 switch (GetEnabled())
                 {
-                    case EnabledActions::Closed:
-                    case EnabledActions::None:
-                    case EnabledActions::Read:  return false;
+                    case EnabledOperations::Closed:
+                    case EnabledOperations::None:
+                    case EnabledOperations::Read:  return false;
                     default:                    return GetUnsafe().WriteString(std::forward(str));
                 }
             }
@@ -260,9 +260,5 @@ namespace cio::Internal
                 return this->GetUnsafe().GetFileSize();
             }
     };
-}
-namespace cio
-{
-    using File = Internal::UnadaptedFile<CstdioAdapter>;
 }
 #endif // FILE_H

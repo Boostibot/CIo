@@ -864,8 +864,8 @@ namespace cio::OpenModeTesting
             REQUIRE(mode.IsValid() == false);
         }
 
-        /*
-        TEMPLATE_TEST_CASE("[OpenMode] : Constructor with COpenMode should crete always valid openmode with appropriate OpenModeString", "[OpenMode][Constructor]", OpenModeTestedTypes)
+
+        TEMPLATE_TEST_CASE("[OpenMode] : Constructor with COpenMode should crete always valid openmode with appropriate OpenModeString, Enabled and Required Actions", "[OpenMode][Constructor]", OpenModeTestedTypes)
         {
             using OpenMode = BasicOpenMode<TestType>;
             using OpenModeString = typename OpenMode::OpenModeString;
@@ -876,7 +876,19 @@ namespace cio::OpenModeTesting
                 const OpenMode mode(COpenMode::Read);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("r"));
 
+                EnabledActions enabled = mode.GetEnabledActions();
+                RequiredActions req = mode.GetRequiredActions();
+
                 CHECK(mode.IsValid() == true);
+
+                CHECK(enabled == EnabledActions::Read);
+
+                CHECK(req.MustExist == false);
+                CHECK(req.MustNotExist == false);
+                CHECK(req.Create == false);
+                CHECK(req.Delete == false);
+                CHECK(req.StartAtEnd == false);
+
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
             WHEN("Provided with COpenMode::Write the OpenModeStr should be \'w\'")
@@ -884,7 +896,19 @@ namespace cio::OpenModeTesting
                 const OpenMode mode(COpenMode::Write);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("w"));
 
+                EnabledActions enabled = mode.GetEnabledActions();
+                RequiredActions req = mode.GetRequiredActions();
+
                 CHECK(mode.IsValid() == true);
+
+                CHECK(enabled == EnabledActions::Write);
+
+                CHECK(req.MustExist == false);
+                CHECK(req.MustNotExist == false);
+                CHECK(req.Create == false);
+                CHECK(req.Delete == false);
+                CHECK(req.StartAtEnd == false);
+
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
             WHEN("Provided with COpenMode::Append the OpenModeStr should be \'a\'")
@@ -892,7 +916,19 @@ namespace cio::OpenModeTesting
                 const OpenMode mode(COpenMode::Append);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("a"));
 
+                EnabledActions enabled = mode.GetEnabledActions();
+                RequiredActions req = mode.GetRequiredActions();
+
                 CHECK(mode.IsValid() == true);
+
+                CHECK(enabled == EnabledActions::Write);
+
+                CHECK(req.MustExist == false);
+                CHECK(req.MustNotExist == false);
+                CHECK(req.Create == false);
+                CHECK(req.Delete == false);
+                CHECK(req.StartAtEnd == false);
+
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
             WHEN("Provided with COpenMode::ReadExtended the OpenModeStr should be \'r+\'")
@@ -900,7 +936,19 @@ namespace cio::OpenModeTesting
                 const OpenMode mode(COpenMode::ReadExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("r+"));
 
+                EnabledActions enabled = mode.GetEnabledActions();
+                RequiredActions req = mode.GetRequiredActions();
+
                 CHECK(mode.IsValid() == true);
+
+                CHECK(enabled == EnabledActions::ReadWrite);
+
+                CHECK(req.MustExist == true);
+                CHECK(req.MustNotExist == false);
+                CHECK(req.Create == false);
+                CHECK(req.Delete == false);
+                CHECK(req.StartAtEnd == false);
+
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
             WHEN("Provided with COpenMode::WriteExtended the OpenModeStr should be \'w+\'")
@@ -908,7 +956,19 @@ namespace cio::OpenModeTesting
                 const OpenMode mode(COpenMode::WriteExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("w+"));
 
+                EnabledActions enabled = mode.GetEnabledActions();
+                RequiredActions req = mode.GetRequiredActions();
+
                 CHECK(mode.IsValid() == true);
+
+                CHECK(enabled == EnabledActions::ReadWrite);
+
+                CHECK(req.MustExist == false);
+                CHECK(req.MustNotExist == false);
+                CHECK(req.Create == false);
+                CHECK(req.Delete == false);
+                CHECK(req.StartAtEnd == false);
+
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
             WHEN("Provided with COpenMode::AppendExtended the OpenModeStr should be \'a+\'")
@@ -916,12 +976,24 @@ namespace cio::OpenModeTesting
                 const OpenMode mode(COpenMode::AppendExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("a+"));
 
+                EnabledActions enabled = mode.GetEnabledActions();
+                RequiredActions req = mode.GetRequiredActions();
+
                 CHECK(mode.IsValid() == true);
+
+                CHECK(enabled == EnabledActions::ReadWrite);
+
+                CHECK(req.MustExist == false);
+                CHECK(req.MustNotExist == false);
+                CHECK(req.Create == false);
+                CHECK(req.Delete == false);
+                CHECK(req.StartAtEnd == false);
+
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
         }
 
-
+/*
         TEMPLATE_TEST_CASE("[OpenMode] : AssignCOpenMode should change the openmode to always valid openmode with appropriate OpenModeString", "[OpenMode][AssignCOpenMode]", OpenModeTestedTypes)
         {
             using OpenMode = BasicOpenMode<TestType>;
@@ -979,7 +1051,7 @@ namespace cio::OpenModeTesting
                 REQUIRE(mode.GetOpenModeString() == expected);
             }
         }
-
+*/
 
         TEMPLATE_TEST_CASE("[OpenMode] : Constructor called with individual OpenModeFlags should create a open mode according to the flags passed", "[OpenMode][Constructor]", OpenModeTestedTypes)
         {
@@ -990,71 +1062,121 @@ namespace cio::OpenModeTesting
 
             WHEN("Called with valid flags it should construct a valid openmode")
             {
-                WHEN("Provided with flags Read MustExist the OpenModeStr should be \'r\'"
+                WHEN("Provided with flags Read MustExist RandomAccessOptimized the OpenModeStr should be \'rbR\'"
                      " and it should be valid")
                 {
-                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::MustExist);
+                    const OpenMode mode(OpenModeFlag::Read, WindowsOpenModeFlag::RandomAccessOptimized);
 
                     const OpenModeString output = mode.GetOpenModeString();
-                    const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("r"));
+                    const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("rbR"));
 
                     const OsStringView outputView = output;
                     const OsStringView expectedView = expected;
+
+                    EnabledActions enabled = mode.GetEnabledActions();
+                    RequiredActions req = mode.GetRequiredActions();
+
+                    CHECK(mode.IsValid() == true);
+
+                    CHECK(enabled == EnabledActions::Read);
+
+                    CHECK(req.MustExist == false);
+                    CHECK(req.MustNotExist == false);
+                    CHECK(req.Create == false);
+                    CHECK(req.Delete == false);
+                    CHECK(req.StartAtEnd == false);
+
                     CHECK(outputView == expectedView);
 
                     CHECK(output == expected);
-                    CHECK(mode.IsValid() == true);
                 }
-                WHEN("Provided with flags Read, Write, MustExist, Binary the OpenModeStr should be \'r+b\'"
+                WHEN("Provided with flags Read, Write, MustExist, Create, StartAtEnd the OpenModeStr should be \'r+b\'"
                      " and it should be valid")
                 {
-                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::MustExist, OpenModeFlag::Binary);
+                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::Create, OpenModeFlag::StartAtEnd);
 
                     const OpenModeString output = mode.GetOpenModeString();
                     const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("r+b"));
 
                     const OsStringView outputView = output;
                     const OsStringView expectedView = expected;
+
+                    EnabledActions enabled = mode.GetEnabledActions();
+                    RequiredActions req = mode.GetRequiredActions();
+
+                    CHECK(mode.IsValid() == true);
+
+                    CHECK(enabled == EnabledActions::ReadWrite);
+
+                    CHECK(req.MustExist == false);
+                    CHECK(req.MustNotExist == false);
+                    CHECK(req.Create == true);
+                    CHECK(req.Delete == false);
+                    CHECK(req.StartAtEnd == true);
+
                     CHECK(outputView == expectedView);
 
                     CHECK(output == expected);
-                    CHECK(mode.IsValid() == true);
                 }
-                WHEN("Provided with flags Write, MustNotExist, CommitDirectlyToDisk, SequntialAccessOptimized the OpenModeStr should be \'wxcS\'"
+                WHEN("Provided with flags Write, Create, MustNotExist, CommitDirectlyToDisk, SequntialAccessOptimized the OpenModeStr should be \'wbcS\'"
                      " and it should be valid")
                 {
-                    const OpenMode mode(OpenModeFlag::Write, OpenModeFlag::MustNotExist, WindowsOpenModeFlag::CommitDirectlyToDisk, WindowsOpenModeFlag::SequntialAccessOptimized);
+                    const OpenMode mode(OpenModeFlag::Write, OpenModeFlag::Create, OpenModeFlag::MustNotExist, WindowsOpenModeFlag::CommitDirectlyToDisk, WindowsOpenModeFlag::SequntialAccessOptimized);
 
                     const OpenModeString output = mode.GetOpenModeString();
-                    const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("wxcS"));
+                    const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("wbcS"));
 
                     const OsStringView outputView = output;
                     const OsStringView expectedView = expected;
+                    EnabledActions enabled = mode.GetEnabledActions();
+                    RequiredActions req = mode.GetRequiredActions();
+
+                    CHECK(mode.IsValid() == true);
+
+                    CHECK(enabled == EnabledActions::Write);
+
+                    CHECK(req.MustExist == false);
+                    CHECK(req.MustNotExist == true);
+                    CHECK(req.Create == true);
+                    CHECK(req.Delete == false);
+                    CHECK(req.StartAtEnd == false);
+
                     CHECK(outputView == expectedView);
 
                     CHECK(output == expected);
-                    CHECK(mode.IsValid() == true);
                 }
-                WHEN("Provided with flags Write, MustNotExist, CommitDirectlyToDisk, SequntialAccessOptimized the OpenModeStr should be \'w+ND,css=UTF-8\'"
+                WHEN("Provided with flags Read, Translated, NotInheritedByChildProcess, DeleteAfterClose, Utf8Encoding the OpenModeStr should be \'rND,css=UTF-8\'"
                      " and it should be valid")
                 {
-                    const OpenMode mode(OpenModeFlag::Read, WindowsOpenModeFlag::NotInheritedByChildProcess, WindowsOpenModeFlag::DeleteAfterClose, WindowsOpenModeFlag::Utf8Encoding);
+                    const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Translated, WindowsOpenModeFlag::NotInheritedByChildProcess, WindowsOpenModeFlag::DeleteAfterClose, WindowsOpenModeFlag::Utf8Encoding);
 
                     const OpenModeString output = mode.GetOpenModeString();
-                    const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("w+ND,css=UTF-8"));
+                    const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("rND,css=UTF-8"));
 
                     const OsStringView outputView = output;
                     const OsStringView expectedView = expected;
+                    EnabledActions enabled = mode.GetEnabledActions();
+                    RequiredActions req = mode.GetRequiredActions();
+
+                    CHECK(mode.IsValid() == true);
+
+                    CHECK(enabled == EnabledActions::Read);
+
+                    CHECK(req.MustExist == false);
+                    CHECK(req.MustNotExist == false);
+                    CHECK(req.Create == false);
+                    CHECK(req.Delete == false);
+                    CHECK(req.StartAtEnd == false);
+
                     CHECK(outputView == expectedView);
 
                     CHECK(output == expected);
-                    CHECK(mode.IsValid() == true);
                 }
             }
 
             WHEN("Called with conflicting flags (according to ConversionState::AreAreFlagsConflicting) it should construct a invalid openmode")
             {
-                WHEN("Provided with flags Read, MustExist, MustNotExist it should be invalid")
+                WHEN("Provided with flags Read, MustNotExist it should be invalid")
                 {
                     const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::MustNotExist);
                     CHECK(mode.IsValid() == false);
@@ -1064,9 +1186,9 @@ namespace cio::OpenModeTesting
                     const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Write, WindowsOpenModeFlag::Text);
                     CHECK(mode.IsValid() == false);
                 }
-                WHEN("Provided with flags Write, UnicodeEncoding, Utf8Encoding it should be invalid")
+                WHEN("Provided with flags Write, UnicodeEncoding, Read, Utf8Encoding it should be invalid")
                 {
-                    const OpenMode mode(OpenModeFlag::Write, WindowsOpenModeFlag::UnicodeEncoding, WindowsOpenModeFlag::Utf8Encoding);
+                    const OpenMode mode(OpenModeFlag::Write, WindowsOpenModeFlag::UnicodeEncoding, OpenModeFlag::Read, WindowsOpenModeFlag::Utf8Encoding);
                     CHECK(mode.IsValid() == false);
                 }
                 WHEN("Provided with flags Write, Append, CommitDirectlyToDisk, CommitIndirectlyToDisk it should be invalid")
@@ -1090,7 +1212,7 @@ namespace cio::OpenModeTesting
                 }
             }
         }
-*/
+
 
         TEMPLATE_TEST_CASE("[OpenMode] : IsValid shoudl return true if the openmode is valid (fit to open a file)", "[OpenMode][IsValid]", OpenModeTestedTypes)
         {

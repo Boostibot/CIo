@@ -40,6 +40,7 @@ namespace cio::Internal
 
         private:
             using FileManager::GetCFile;
+            using FileManager::GetEnabled;
 
         public:
             UnadaptedUnsafeFile() = default;
@@ -83,9 +84,9 @@ namespace cio::Internal
                 if(ExecuteRequiredBeforeActions(path, openMode.GetRequiredActions()) == false)
                     return false;
 
-                OpenNew(path, openMode);
+                GetManager().OpenNew(path, openMode);
 
-                return ExecuteRequiredAfterActions(openMode.GetEnabledActions(), openMode.GetRequiredActions());
+                return ExecuteRequiredAfterActions(openMode.GetEnabledOperations(), openMode.GetRequiredActions());
             }
 
             template<typename ... OpenModeTypes,
@@ -115,7 +116,7 @@ namespace cio::Internal
                 return true;
             }
 
-            inline bool ExecuteRequiredAfterActions(EnabledActions enabled, const RequiredActions REF required) noexcept
+            inline bool ExecuteRequiredAfterActions(EnabledOperations enabled, const RequiredActions REF required) noexcept
             {
                 if(IsOpen())
                 {
@@ -128,7 +129,7 @@ namespace cio::Internal
                 }
                 else
                 {
-                    GetEnabled() = EnabledActions::Closed;
+                    GetEnabled() = EnabledOperations::Closed;
                     return false;
                 }
             }
@@ -136,37 +137,51 @@ namespace cio::Internal
         public:
             inline bool WasEndOfFileRieched() const noexcept //feof
             {
-                return (Adapter::feof(GetCFile()) != 0);
+                return (feof(GetCFile()) != 0);
+            }
+            inline EnabledOperations GetEnabledOperations() const noexcept
+            {
+                return GetManager().GetEnabled();
+            }
+            inline EnabledOperations IsReadingEnabled() const noexcept
+            {
+                return GetEnabledOperations() == EnabledOperations::Read ||
+                        GetEnabledOperations() == EnabledOperations::ReadWrite;
+            }
+            inline EnabledOperations IsWritingEnabled() const noexcept
+            {
+                return GetEnabledOperations() == EnabledOperations::Write ||
+                        GetEnabledOperations() == EnabledOperations::ReadWrite;
             }
 
         public:
             inline Position GetPos() const noexcept //ftell
             {
                 Position pos = Position();
-                Adapter::fgetpos(GetCFile(), pos);
+                fgetpos(GetCFile(), pos);
                 return pos;
             }
 
             inline bool SavePos(Position REF pos) const noexcept //fgetpos
             {
-                return (Adapter::fgetpos(GetCFile(), pos) == 0);
+                return (fgetpos(GetCFile(), pos) == 0);
             }
             inline bool RestorePos(const Position REF pos) const noexcept //fsetpos
             {
-                return (Adapter::fsetpos(GetCFile(), pos) == 0);
+                return (fsetpos(GetCFile(), pos) == 0);
             }
 
             inline Position GetOffset() const noexcept //ftell
             {
-                return Adapter::ftell(GetCFile());
+                return ftell(GetCFile());
             }
             inline bool MoveTo(const Offset offset, const Origin from = Origin::Beggining) noexcept //fseek
             {
-                return (Adapter::fseek(GetCFile(), offset, from) == 0);
+                return (fseek(GetCFile(), offset, from) == 0);
             }
             inline void MoveToBeggining() noexcept //frewind
             {
-                Adapter::rewind(GetCFile());
+                rewind(GetCFile());
             }
             inline void MoveToEnd() noexcept //fseek end
             {
@@ -191,7 +206,7 @@ namespace cio::Internal
             template<typename PointerType>
             [[nodiscard]] inline Size ReadAndCount(PointerType PTR ptrToBuffer, const Size count) noexcept //fread
             {
-                return Adapter::fread(ptrToBuffer, sizeof (PointerType), count, GetCFile());
+                return fread(ptrToBuffer, sizeof (PointerType), count, GetCFile());
             }
 
 
@@ -217,7 +232,7 @@ namespace cio::Internal
             template<typename PointerType>
             [[nodiscard]] inline Size WriteAndCount(const PointerType PTR const ptrToData, const Size count) noexcept //fwrite
             {
-                return Adapter::fwrite(ptrToData, sizeof (PointerType), count, GetCFile());
+                return fwrite(ptrToData, sizeof (PointerType), count, GetCFile());
             }
 
             template<typename ObjectType>
@@ -247,11 +262,11 @@ namespace cio::Internal
         public:
             inline bool SetBuffer(void PTR bufferPtr, const Size bufferSize, const BufferingMode mode) noexcept //setvbuf
             {
-                return (Adapter::setvbuf(GetCFile(), static_cast<char PTR>(bufferPtr), static_cast<i32>(mode), bufferSize) == 0); //fflush
+                return (setvbuf(GetCFile(), static_cast<char PTR>(bufferPtr), static_cast<i32>(mode), bufferSize) == 0); //fflush
             }
             inline void Flush() noexcept //fflush
             {
-                Adapter::fflush(GetCFile());
+                fflush(GetCFile());
             }
             inline void SwitchBetweenReadAndWrite() noexcept
             {
@@ -264,7 +279,7 @@ namespace cio::Internal
                 if(filenameSize < ThisType::TempFileNameMaxLenght)
                     return false;
 
-                return (Adapter::tmpnam_s(filename, filenameSize) == 0);
+                return (tmpnam_s(filename, filenameSize) == 0);
             }
             inline static bool GetUniqueTempFileName(OsString REF filename) noexcept //tmpnam_s
             {
@@ -285,12 +300,12 @@ namespace cio::Internal
 
             inline static bool RenameFile(const OsStringView oldFileName, const OsStringView newFileName) noexcept //rename
             {
-                return (Adapter::rename(oldFileName.data(), newFileName.data()) == 0);
+                return (rename(oldFileName.data(), newFileName.data()) == 0);
             }
 
             inline static bool RemoveFile(const OsStringView fileName) noexcept //remove
             {
-                return (Adapter::remove(fileName.data()) == 0);
+                return (remove(fileName.data()) == 0);
             }
 
             static FileSize GetFileSize(const OsStringView filename) noexcept
@@ -321,10 +336,4 @@ namespace cio::Internal
 
     };
 }
-
-namespace cio
-{
-    using UnsafeFile = Internal::UnadaptedUnsafeFile<CstdioAdapter>;
-}
-
 #endif // NEWFILE_H

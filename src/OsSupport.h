@@ -1,11 +1,20 @@
 #ifndef COMPILERSUPPORT_H
 #define COMPILERSUPPORT_H
 
+//Define one of the following before including cio library
+// if automatic detection of OS didnt work properly:
+
 //#define POSIX_OS
 //#define WINDOWS_OS
 //#define PURE_C
 
-#ifndef PURE_C
+//Automatically detects target OS
+#if defined (POSIX_OS) || defined (WINDOWS_OS) || defined (PURE_C)
+#define OS_USER_DECLARED
+#define OS_FOUND
+#endif
+
+#ifndef OS_USER_DECLARED
 
     #if defined (__linux__) || defined (__linux) || \
         defined (__unix__) || defined (__unix) || \
@@ -17,8 +26,10 @@
     #endif
 
     #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-        #define OS_FOUND
-        #define WINDOWS_OS
+        #ifndef OS_FOUND
+            #define OS_FOUND
+            #define WINDOWS_OS
+        #endif
     #endif
 
 #endif
@@ -29,6 +40,8 @@
 #endif
 
 #undef OS_FOUND
+#undef OS_USER_DECLARED
+
 
 #ifdef POSIX_OS
     #define _FILE_OFFSET_BITS 64
@@ -43,7 +56,7 @@
 #include <cstdio>
 #include "Common.h"
 
-namespace cio::CompilerSupport
+namespace cio::OsSupport
 {
 
 #ifdef WINDOWS_OS

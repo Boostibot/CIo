@@ -93,7 +93,7 @@ namespace cio
         AppendExtended  //Read && Write && Append
     };
 
-    enum class EnabledActions: OpenModeHelpers::EnumBaseType
+    enum class EnabledOperations: OpenModeHelpers::EnumBaseType
     {
         None,
         Read,
@@ -296,7 +296,6 @@ namespace cio
                             case Helper::Binary(1, 1, 1): set(COpenMode::ReadExtended, 0, 1, 1, 1);
                         }
 
-
 #else
                         //Best matching permissions - Only two cases where permissions require exeptions
                         if(Write && Read)
@@ -350,19 +349,19 @@ namespace cio
                             required.StartAtEnd = true;
                     }
 
-                    constexpr EnabledActions GetEnabledActions() const noexcept
+                    constexpr EnabledOperations GetEnabledOperations() const noexcept
                     {
                         const bool read         = Presence[OpenModeFlag::Read];
                         const bool write        = Presence[OpenModeFlag::Write];
 
                         if(read && write)
-                            return EnabledActions::ReadWrite;
+                            return EnabledOperations::ReadWrite;
                         if(read)
-                            return EnabledActions::Read;
+                            return EnabledOperations::Read;
                         if(write)
-                            return EnabledActions::Write;
+                            return EnabledOperations::Write;
 
-                        return EnabledActions::None;
+                        return EnabledOperations::None;
                     }
 
                     constexpr static RequiredActions GetCOpenRequiredActions(const COpenMode mode) noexcept
@@ -377,17 +376,17 @@ namespace cio
                             return RequiredActions();
                     }
 
-                    constexpr static EnabledActions GetCOpenEnabledActions(const COpenMode mode) noexcept
+                    constexpr static EnabledOperations GetCOpenEnabledOperations(const COpenMode mode) noexcept
                     {
                         switch(mode)
                         {
-                            case COpenMode::Read:           return EnabledActions::Read;
-                            case COpenMode::Write:          return EnabledActions::Write;
-                            case COpenMode::Append:         return EnabledActions::Write;
-                            case COpenMode::ReadExtended:   return EnabledActions::ReadWrite;
-                            case COpenMode::WriteExtended:  return EnabledActions::ReadWrite;
-                            case COpenMode::AppendExtended: return EnabledActions::ReadWrite;
-                            default:                        return EnabledActions::None;
+                            case COpenMode::Read:           return EnabledOperations::Read;
+                            case COpenMode::Write:          return EnabledOperations::Write;
+                            case COpenMode::Append:         return EnabledOperations::Write;
+                            case COpenMode::ReadExtended:   return EnabledOperations::ReadWrite;
+                            case COpenMode::WriteExtended:  return EnabledOperations::ReadWrite;
+                            case COpenMode::AppendExtended: return EnabledOperations::ReadWrite;
+                            default:                        return EnabledOperations::None;
                         }
                     }
 
@@ -447,7 +446,7 @@ namespace cio
             using ConversionState         = OpenModeHelpers::ConversionState<OsCharT>;
 
         public:
-            using EnabledActions          = EnabledActions;
+            using EnabledOperations          = EnabledOperations;
             using RequiredActions         = OpenModeHelpers::RequiredActions;
             using EnumBaseType            = OpenModeHelpers::EnumBaseType;
             using OpenModeFlag            = OpenModeFlag;
@@ -464,7 +463,7 @@ namespace cio
         private:
             bool             Valid       = {false};
             COpenMode        CMode       = {COpenMode::ReadExtended};
-            EnabledActions   Enabled     = {EnabledActions::Closed};
+            EnabledOperations   Enabled     = {EnabledOperations::Closed};
             RequiredActions  Required    = {RequiredActions()};
             OpenModeString   OpenModeStr = {OpenModeString()};
 
@@ -495,7 +494,7 @@ namespace cio
 
             inline constexpr auto GetOpenModeString()   const noexcept {return OpenModeStr;}
             inline constexpr auto GetCOpenMode()        const noexcept {return CMode;}
-            inline constexpr auto GetEnabledActions()   const noexcept {return Enabled;}
+            inline constexpr auto GetEnabledOperations()   const noexcept {return Enabled;}
             inline constexpr auto GetRequiredActions()  const noexcept {return Required;}
 
             inline constexpr operator OsStringView() const noexcept
@@ -510,7 +509,7 @@ namespace cio
                 CMode = cOpenMode;
                 Valid = true;
                 Required = ConversionState::GetCOpenRequiredActions(cOpenMode);
-                Enabled = ConversionState::GetCOpenEnabledActions(cOpenMode);
+                Enabled = ConversionState::GetCOpenEnabledOperations(cOpenMode);
                 OpenModeStr = ConversionState::GetCOpenModeStr(cOpenMode);
             }
             template<typename ... FlagTypes>
@@ -520,10 +519,10 @@ namespace cio
 
                 Valid = NOT state.AreFlagsConflicting();
 
-                if(NOT IsValid())
+                if(IsValid() == false)
                     return;
 
-                Enabled = state.GetEnabledActions();
+                Enabled = state.GetEnabledOperations();
                 state.GetCopenModeAndRequiredActions(CMode, Required);
 
                 OpenModeStr += state.GetCOpenModeStr(CMode);
