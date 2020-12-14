@@ -876,12 +876,12 @@ namespace cio::OpenModeTesting
                 const OpenMode mode(COpenMode::Read);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("r"));
 
-                EnabledActions enabled = mode.GetEnabledActions();
+                EnabledOperations enabled = mode.GetEnabledOperations();
                 RequiredActions req = mode.GetRequiredActions();
 
                 CHECK(mode.IsValid() == true);
 
-                CHECK(enabled == EnabledActions::Read);
+                CHECK(enabled == EnabledOperations::Read);
 
                 CHECK(req.MustExist == false);
                 CHECK(req.MustNotExist == false);
@@ -896,12 +896,12 @@ namespace cio::OpenModeTesting
                 const OpenMode mode(COpenMode::Write);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("w"));
 
-                EnabledActions enabled = mode.GetEnabledActions();
+                EnabledOperations enabled = mode.GetEnabledOperations();
                 RequiredActions req = mode.GetRequiredActions();
 
                 CHECK(mode.IsValid() == true);
 
-                CHECK(enabled == EnabledActions::Write);
+                CHECK(enabled == EnabledOperations::Write);
 
                 CHECK(req.MustExist == false);
                 CHECK(req.MustNotExist == false);
@@ -916,12 +916,12 @@ namespace cio::OpenModeTesting
                 const OpenMode mode(COpenMode::Append);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("a"));
 
-                EnabledActions enabled = mode.GetEnabledActions();
+                EnabledOperations enabled = mode.GetEnabledOperations();
                 RequiredActions req = mode.GetRequiredActions();
 
                 CHECK(mode.IsValid() == true);
 
-                CHECK(enabled == EnabledActions::Write);
+                CHECK(enabled == EnabledOperations::Write);
 
                 CHECK(req.MustExist == false);
                 CHECK(req.MustNotExist == false);
@@ -936,12 +936,12 @@ namespace cio::OpenModeTesting
                 const OpenMode mode(COpenMode::ReadExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("r+"));
 
-                EnabledActions enabled = mode.GetEnabledActions();
+                EnabledOperations enabled = mode.GetEnabledOperations();
                 RequiredActions req = mode.GetRequiredActions();
 
                 CHECK(mode.IsValid() == true);
 
-                CHECK(enabled == EnabledActions::ReadWrite);
+                CHECK(enabled == EnabledOperations::ReadWrite);
 
                 CHECK(req.MustExist == true);
                 CHECK(req.MustNotExist == false);
@@ -956,12 +956,12 @@ namespace cio::OpenModeTesting
                 const OpenMode mode(COpenMode::WriteExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("w+"));
 
-                EnabledActions enabled = mode.GetEnabledActions();
+                EnabledOperations enabled = mode.GetEnabledOperations();
                 RequiredActions req = mode.GetRequiredActions();
 
                 CHECK(mode.IsValid() == true);
 
-                CHECK(enabled == EnabledActions::ReadWrite);
+                CHECK(enabled == EnabledOperations::ReadWrite);
 
                 CHECK(req.MustExist == false);
                 CHECK(req.MustNotExist == false);
@@ -976,12 +976,12 @@ namespace cio::OpenModeTesting
                 const OpenMode mode(COpenMode::AppendExtended);
                 const OpenModeString expected = PromoteStringCharsTo<TestType>(Char8ConstexprStr("a+"));
 
-                EnabledActions enabled = mode.GetEnabledActions();
+                EnabledOperations enabled = mode.GetEnabledOperations();
                 RequiredActions req = mode.GetRequiredActions();
 
                 CHECK(mode.IsValid() == true);
 
-                CHECK(enabled == EnabledActions::ReadWrite);
+                CHECK(enabled == EnabledOperations::ReadWrite);
 
                 CHECK(req.MustExist == false);
                 CHECK(req.MustNotExist == false);
@@ -1073,12 +1073,12 @@ namespace cio::OpenModeTesting
                     const OsStringView outputView = output;
                     const OsStringView expectedView = expected;
 
-                    EnabledActions enabled = mode.GetEnabledActions();
+                    EnabledOperations enabled = mode.GetEnabledOperations();
                     RequiredActions req = mode.GetRequiredActions();
 
                     CHECK(mode.IsValid() == true);
 
-                    CHECK(enabled == EnabledActions::Read);
+                    CHECK(enabled == EnabledOperations::Read);
 
                     CHECK(req.MustExist == false);
                     CHECK(req.MustNotExist == false);
@@ -1101,12 +1101,12 @@ namespace cio::OpenModeTesting
                     const OsStringView outputView = output;
                     const OsStringView expectedView = expected;
 
-                    EnabledActions enabled = mode.GetEnabledActions();
+                    EnabledOperations enabled = mode.GetEnabledOperations();
                     RequiredActions req = mode.GetRequiredActions();
 
                     CHECK(mode.IsValid() == true);
 
-                    CHECK(enabled == EnabledActions::ReadWrite);
+                    CHECK(enabled == EnabledOperations::ReadWrite);
 
                     CHECK(req.MustExist == false);
                     CHECK(req.MustNotExist == false);
@@ -1128,12 +1128,12 @@ namespace cio::OpenModeTesting
 
                     const OsStringView outputView = output;
                     const OsStringView expectedView = expected;
-                    EnabledActions enabled = mode.GetEnabledActions();
+                    EnabledOperations enabled = mode.GetEnabledOperations();
                     RequiredActions req = mode.GetRequiredActions();
 
                     CHECK(mode.IsValid() == true);
 
-                    CHECK(enabled == EnabledActions::Write);
+                    CHECK(enabled == EnabledOperations::Write);
 
                     CHECK(req.MustExist == false);
                     CHECK(req.MustNotExist == true);
@@ -1155,12 +1155,12 @@ namespace cio::OpenModeTesting
 
                     const OsStringView outputView = output;
                     const OsStringView expectedView = expected;
-                    EnabledActions enabled = mode.GetEnabledActions();
+                    EnabledOperations enabled = mode.GetEnabledOperations();
                     RequiredActions req = mode.GetRequiredActions();
 
                     CHECK(mode.IsValid() == true);
 
-                    CHECK(enabled == EnabledActions::Read);
+                    CHECK(enabled == EnabledOperations::Read);
 
                     CHECK(req.MustExist == false);
                     CHECK(req.MustNotExist == false);
@@ -1269,33 +1269,33 @@ namespace cio::OpenModeTesting
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenMode] : GetEnabledActions shoudl return the actions enebled on the file opened with this openmode", "[OpenMode][IsValid]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenMode] : GetEnabledOperations shoudl return the actions enebled on the file opened with this openmode", "[OpenMode][IsValid]", OpenModeTestedTypes)
         {
             using OpenMode = BasicOpenMode<TestType>;
-            WHEN("A constructed mode is valid GetEnabledActions returns the enebled actions")
+            WHEN("A constructed mode is valid GetEnabledOperations returns the enebled actions")
             {
                 {
                     const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::Override);
-                    REQUIRE(mode.GetEnabledActions() == EnabledActions::ReadWrite);
+                    REQUIRE(mode.GetEnabledOperations() == EnabledOperations::ReadWrite);
                 }
                 {
                     const OpenMode mode(OpenModeFlag::Read, OpenModeFlag::Create);
-                    REQUIRE(mode.GetEnabledActions() == EnabledActions::Read);
+                    REQUIRE(mode.GetEnabledOperations() == EnabledOperations::Read);
                 }
                 {
                     const OpenMode mode(OpenModeFlag::Write, OpenModeFlag::StartAtEnd);
-                    REQUIRE(mode.GetEnabledActions() == EnabledActions::Write);
+                    REQUIRE(mode.GetEnabledOperations() == EnabledOperations::Write);
                 }
                 {
                     const OpenMode mode(OpenModeFlag::StartAtEnd, OpenModeFlag::Create);
-                    REQUIRE(mode.GetEnabledActions() == EnabledActions::None);
+                    REQUIRE(mode.GetEnabledOperations() == EnabledOperations::None);
                 }
 
             }
-            WHEN("A constructed mode is invalid GetEnabledActions returns Closed")
+            WHEN("A constructed mode is invalid GetEnabledOperations returns Closed")
             {
                 const OpenMode mode(WindowsOpenModeFlag::Text, OpenModeFlag::MustNotExist);
-                REQUIRE(mode.GetEnabledActions() == EnabledActions::Closed);
+                REQUIRE(mode.GetEnabledOperations() == EnabledOperations::Closed);
             }
         }
 

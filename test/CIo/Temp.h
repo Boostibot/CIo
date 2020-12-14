@@ -2,122 +2,148 @@
 #define TEMP_H
 
 #include "Catch2/Catch.hpp"
-
-#include <cstdlib>
-#include <math.h>
-
-#define SAFE_BLOCKS
-
-namespace Blocks
-{
-
-#define TRUE 1
-#define FALSE 0
-#define BOOL char
-
-#ifdef SAFE_BLOCKS
-#define CHECK_INDEX(block, index, indexName, functionName) \
-    if(newCharSize > block.Capacity) \
-    { \
-        printf("[Block::" functionName "]: Invalid arguments; " indexName " exceeding block Capacity\n"); \
-        printf("[Block::" functionName "]: " indexName ": %u\n", index); \
-        printf("[Block::" functionName "]: block Capacity: %u\n", block.Capacity); \
-        printf("[Block::" functionName "]: Further execution undefined\n"); \
-    }
-#else
-#define CHECK_INDEX(block, index, indexName, functionName)
-#endif
+#include "cplusplus.h"
+#include "Blocks.h"
 
 
-    //Base
-    struct Block
-    {
-            char * Data;
-            unsigned int Size;
-            unsigned int Capacity;
-    };
-    void * GetData(Block* block)            {return block.Data;}
-    unsigned int GetSize(Block* block)      {return block.Size;}
-    unsigned int GetCapacity(Block* block)  {return block.Capacity;}
-
-    Block CreateEmptyBlock()
-    {
-        Block block;
-        block.Data = NULL;
-        block.Capacity = 0;
-        block.Size = 0;
-
-        return block;
-    }
-
-    BOOL IsCharIndexValid(Block* block, unsigned int charSize)
-    {
-        return charSize <= block.Capacity;
-    }
-
-    BOOL IsIntIndexValid(Block* block, unsigned int intSize)
-    {
-        return IsCharIndexValid(block, intSize*sizeof(int));
-    }
-
-    void SetCharSize(Block* block, unsigned int newCharSize)
-    {
-        CHECK_INDEX(block, newCharSize, "newCharSize", "SetCharSize");
-        block.Size = newCharSize;
-    }
-
-    void SetIntSize(Block* block, unsigned int newIntSize)
-    {
-        SetCharSize(block, newIntSize*sizeof(int));
-    }
-
-    Block CreateCharBlock(char * data, unsigned int charSize, unsigned int charCapacity)
-    {
-        Block block;
-        block.Data = data;
-        block.Capacity = charCapacity;
-        block.Size = charSize;
-        CHECK_INDEX(block, newCharSize, "charSize", "CreateCharBlock");
-
-        return block;
-    }
-
-    Block CreateIntBlock(int * data, unsigned int intSize, unsigned int intCapacity)
-    {
-        return CreateCharBlock(data, intSize*sizeof(int), intCapacity*sizeof(int));
-    }
-
-    char* CharAt(Block* block, unsigned int charindex)
-    {
-        CHECK_INDEX(block, charindex, "charindex", "CharAt");
-        return block->Data[charindex];
-    }
-
-    int* IntAt(Block* block, unsigned int intIndex)
-    {
-        return CharAt(block, intIndex*sizeof(int));
-    }
-
-
-    //Allocating
-    Block AllocateCharBlock(unsigned int charCapacity)
-    {
-        return CreateCharBlock((char*)malloc(charCapacity*sizeof(char)), 0, charCapacity);
-    }
-
-    Block AllocateIntBlock(unsigned int intCapacity)
-    {
-        return AllocateCharBlock(charCapacity*sizeof(int));
-    }
-
-}
 
 namespace cio::Testing
 {
+    using namespace Blocks;
 
-    TEST_CASE("Testing of everything", "[Everything]")
+    inline Bool IsCharAtSpace(const Block* string, Size index)
     {
+        return (isspace(At(string, index, char)) != 0);
     }
+
+    typedef Block BlockBlock ;
+
+    void AppendStringPart(BlockBlock * to, BlockView part)
+    {
+        GrowBlockToFit(to, to->ByteSize + sizeof (BlockView));
+        RawAt(to, to->ByteSize, BlockView) = part;
+        SetSize(to, to->ByteSize + sizeof (BlockView), char);
+    }
+
+
+    void SplitIntoWords(Block* string, BlockBlock* words)
+    {
+        Size lastNonSpace = 0;
+        Bool hasNewWord = FALSE;
+
+        Size charSize = GetSize(string, char);
+        for(Size i = 0; i < charSize; i++)
+        {
+            if(hasNewWord)
+            {
+                if(IsCharAtSpace(string, i))
+                {
+                    Size len = i - lastNonSpace;
+                    BlockView newPart = CreateBlockView(&At(string, lastNonSpace, char), len, len);
+                    AppendStringPart(words, newPart);
+
+                    hasNewWord = FALSE;
+                }
+
+            }
+            else
+            {
+                if(IsCharAtSpace(string, i) == FALSE)
+                {
+                    lastNonSpace = i;
+                    hasNewWord = TRUE;
+                }
+            }
+        }
+
+        if(hasNewWord)
+        {
+            Size len = charSize - lastNonSpace;
+            BlockView newPart = CreateBlockView(&At(string, lastNonSpace, char), len, len);
+            AppendStringPart(words, newPart);
+        }
+    }
+
+    void GetKeyChars(BlockView* msg, Block* keyChars)
+    {
+        Size msgLen = GetSize(msg, char);
+        //Counts how many of each char there are
+        for(Size i = 0; i < msgLen; i++)
+        {
+            char at = At(msg, i, char);
+            At(keyChars, at, int) ++;
+        }
+
+        Size keyCharsSize = GetSize(keyChars, int);
+        for(Size i = 0; i < keyCharsSize; i++)
+        {
+            int* at = &At(keyChars, i, int);
+            if(*at > 1)
+                *at = TRUE;
+            else
+                *at = FALSE;
+        }
+    }
+
+
+
+    TEST_CASE("Testing of algorhitm", "[Everything]")
+    {
+        //struct Block msg = CreateEmptyBlock();
+        //struct Block dict = CreateEmptyBlock();
+        //struct Block output = CreateEmptyBlock();
+
+
+    }
+
+    void callerfunction()
+    {
+        int storage[257] = {0};
+        Block block = CreateBlock(storage, IntI(256), IntI(256));
+
+        At(&block, 256, int) = 3;
+    }
+
+    TEST_CASE("[GetKeyChars] : GetKeyChars should retrieve which chars repeat", "[GetKeyChars]")
+    {
+
+        {
+            int keyCharsStorage[257] = {0};
+
+            struct BlockView input = ToStringBlockView(" aa xx abcdefghijklmn 13423 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+
+            struct Block keyChars = CreateBlock((void*)keyCharsStorage, IntI(256), IntI(256));
+
+            GetKeyChars(&input, &keyChars);
+
+            puts("");
+            At(&keyChars, 256, int) = 3;
+            puts("");
+            callerfunction();
+
+            CHECK(At(&keyChars, (Size)'a', int) == 1);
+            CHECK(At(&keyChars, (Size)'b', int) == 1);
+            CHECK(At(&keyChars, (Size)'c', int) == 0);
+            CHECK(At(&keyChars, (Size)'d', int) == 0);
+            CHECK(At(&keyChars, (Size)'e', int) == 0);
+            CHECK(At(&keyChars, (Size)'f', int) == 0);
+            CHECK(At(&keyChars, (Size)'g', int) == 0);
+            CHECK(At(&keyChars, (Size)'h', int) == 0);
+            CHECK(At(&keyChars, (Size)'i', int) == 0);
+            CHECK(At(&keyChars, (Size)'j', int) == 0);
+            CHECK(At(&keyChars, (Size)'k', int) == 0);
+            CHECK(At(&keyChars, (Size)'l', int) == 0);
+            CHECK(At(&keyChars, (Size)'m', int) == 0);
+            CHECK(At(&keyChars, (Size)'n', int) == 0);
+            CHECK(At(&keyChars, (Size)'1', int) == 0);
+            CHECK(At(&keyChars, (Size)'2', int) == 0);
+            CHECK(At(&keyChars, (Size)'3', int) == 1);
+            CHECK(At(&keyChars, (Size)'4', int) == 0);
+            CHECK(At(&keyChars, (Size)'x', int) == 1);
+            CHECK(At(&keyChars, (Size)' ', int) == 1);
+        }
+    }
+
 }
 
 #endif // TEMP_H
