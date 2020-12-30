@@ -274,7 +274,6 @@ namespace cio
 
                         auto set = [&](COpenMode to, bool must = false, bool mustNot = false, bool create = false, bool del = false)
                         {
-
                             cmode = to;
                             required.MustExist = must;
                             required.MustNotExist = mustNot;
@@ -446,7 +445,7 @@ namespace cio
             using ConversionState         = OpenModeHelpers::ConversionState<OsCharT>;
 
         public:
-            using EnabledOperations          = EnabledOperations;
+            using EnabledOperations       = EnabledOperations;
             using RequiredActions         = OpenModeHelpers::RequiredActions;
             using EnumBaseType            = OpenModeHelpers::EnumBaseType;
             using OpenModeFlag            = OpenModeFlag;
@@ -461,11 +460,11 @@ namespace cio
             using OsStringView            = StringView<OsCharType>;
 
         private:
-            bool             Valid       = {false};
-            COpenMode        CMode       = {COpenMode::ReadExtended};
+            bool                Valid       = {false};
+            COpenMode           CMode       = {COpenMode::ReadExtended};
             EnabledOperations   Enabled     = {EnabledOperations::Closed};
-            RequiredActions  Required    = {RequiredActions()};
-            OpenModeString   OpenModeStr = {OpenModeString()};
+            RequiredActions     Required    = {RequiredActions()};
+            OpenModeString      OpenModeStr = {OpenModeString()};
 
         public:
             constexpr BasicOpenMode() noexcept = default;

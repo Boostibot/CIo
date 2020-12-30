@@ -17,10 +17,9 @@ HEADERS += \
     ../src/OpenMode.h \
     ../src/OsSupport.h \
     ../src/UnsafeFile.h \
-    CIo/Blocks.h \
         CIo/FileManager.h \
         CIo/FileManager_TestingUtilities.h \
-    CIo/MockAdaptor.h \
+    CIo/MockAdapter.h \
     CIo/NewUnsafeFile.h \
     CIo/Temp.h \
         CIo/UseExamples.h \
@@ -43,7 +42,11 @@ HEADERS += \
         ../src/ConstexprString.h \
         ../src/UniversalString.h \
         ../src/UseExamples.h \
-    CIo/cplusplus.h
+    Unralated//cplusplus.h \
+    Unralated/Blocks.h \
+    Unralated/CSafety.h \
+    Unralated/CppSafety.h \
+    Unralated/CustomTestFramework.h
 
 SOURCES += \
 

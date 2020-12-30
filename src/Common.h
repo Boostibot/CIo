@@ -7,7 +7,6 @@
 #define NOT                     !
 #define REF                     &
 #define RVALUE_REF              &&
-#define MUST_OVERRIDE           0
 #define ADDRESS(item)           (::std::addressof(item))
 #define PTR                     *
 #define PTR_VAL(pointer)        (*pointer)

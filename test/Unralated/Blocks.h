@@ -2,13 +2,17 @@
 #define BLOCKS_H
 
 #include "Catch2/Catch.hpp"
+#include "CppSafety.h"
 
 #include <cstdlib>
 #include <math.h>
 
 
+
 namespace Blocks
 {
+
+    using namespace CSafety;
 
 #define SAFE_BLOCKS //Setts if blocks should use safe mode - when commented out there should be 0 runtime overhead
 //#define BLOCK_TEST
@@ -22,8 +26,6 @@ namespace Blocks
 //Definitions
 #if defined (INCLUDE_BLOCKS)
 
-#define TRUE 1
-#define FALSE 0
 
 #ifdef BLOCK_TEST
 static char Error = false;
@@ -40,128 +42,88 @@ static char Error = false;
 
 #if defined(SAFE_BLOCKS) && ! defined (BLOCK_TEST)
 
-#define CHECK_INDEX(index, elemSize, capacity, indexName, functionName, file, line, function) \
-    if((index) + (elemSize) > (capacity)) \
-    { \
-        puts("[Block::" functionName "]: Invalid arguments: acessed " indexName " exceeding capacity"); \
-        printf("[Block::" functionName "]: " indexName ": %u\n", (Size)(index)); \
-        printf("[Block::" functionName "]: sizeof type: %u\n", (Size)(elemSize)); \
-        printf("[Block::" functionName "]: capacity: %u\n", (Size)(capacity)); \
-        printf("--> %s (%d) %s(...)\n", file, line, function); \
-    }
-
 #else
 #define CHECK_INDEX(index, capacity, indexName, functionName, file, line, function)
 #endif
 #endif
 
-#define CHECK_INDEX_NO_INFO(index, elemSize, capacity, indexName, functionName) \
-    CHECK_INDEX(index, elemSize, capacity, indexName, functionName, "???", 0, "???")
-
-    //Types
-    typedef unsigned int Size;
-    typedef double       Decimal;
-    typedef char         Bool;
-    typedef unsigned char byte;
-
     //Base
-    struct Block
+    typedef struct BLOCK
     {
             byte * Data;
             Size ByteSize;
             Size ByteCapacity;
-    };
-    struct BlockView
+    } Block;
+    typedef struct BLOCK_VIEW
     {
             const byte * Data;
             Size ByteSize;
             Size ByteCapacity;
-    };
+    } BlockView;
 
-
-
-
-#define I(index, type) ((index) * sizeof (type))
-#define IFrom(byteIndex, type) ((byteIndex) / sizeof (type))
-
-    //Peromance saving
-    #ifdef SAFE_BLOCKS
-    inline Size InternalIdentityAndCheck(Size index, Size elemSize, Size capacity,
-                                         const char * file, int line, const char* function)
-    {
-        CHECK_INDEX(index, elemSize, capacity, "index", "At",
-                    file, line, function);
-        return index;
-    }
-    inline void InternalSetAndCheck(Size * what, Size to, Size elemSize, Size capacity,
-                                    const char * file, int line, const char* function)
-    {
-        CHECK_INDEX(*what, elemSize, capacity, "size", "SetSize",
-                    file, line, function);
-        *what = to;
-    }
-    #define IDENTITY_AND_CHECK(index, elemSize, capacity)             InternalIdentityAndCheck(index, elemSize, capacity, __FILE__, __LINE__, __func__)
-    #define IDENTITY_SET_AND_CHECK(what, to, elemSize, capacity)  InternalSetAndCheck(&(what), to, elemSize, capacity, __FILE__, __LINE__, __func__)
-    #else
-    #define IDENTITY_AND_CHECK(index, elemSize, capacity) (index)
-    #define IDENTITY_SET_AND_CHECK(what, to, elemSize, capacity) (what) = (to)
-    #endif
+    #define I(index, type) ((index) * sizeof (type))
+    #define IFrom(byteIndex, type) ((byteIndex) / sizeof (type))
 
     #define CAST_PTR(ptr, type) (type*)(void*)(ptr)
-    #define RawAt(anyBlock, index, type)    (*CAST_PTR( (anyBlock)->Data + IDENTITY_AND_CHECK((index), sizeof (type), (anyBlock)->ByteCapacity), type ))
-    #define At(anyBlock, index, type)       RawAt(anyBlock, (index) * sizeof (type), type)
+    #define RawAt(anyBlock, index, type)    (*CAST_PTR( (anyBlock)->Data + IDENTITY_AND_CHECK((index), sizeof (type), (anyBlock)->ByteSize, "Block::BlockAt"), type ))
+    #define BlockAt(anyBlock, index, type)       RawAt(anyBlock, (index) * sizeof (type), type)
     #define GetSize(anyBlock, type)         IFrom((anyBlock)->ByteSize, type)
-    #define SetSize(anyBlock, to, type)     IDENTITY_SET_AND_CHECK((anyBlock)->ByteSize, I(to, type), 0, (anyBlock)->ByteCapacity)
+    #define SetSize(anyBlock, to, type)     IDENTITY_SET_AND_CHECK((anyBlock)->ByteSize, I(to, type), 0, (anyBlock)->ByteSize, "Block::SetSize")
     #define GetCapacity(anyBlock, type) I   From((anyBlock)->ByteSize, type)
     #define SetCapacity(anyBlock, to, type) (anyBlock)->ByteCapacity = I(to, type)
 
-    struct Block CreateBlock(void * data, Size byteSize, Size byteCapacity)
+    Block CreateBlock(void * data, Size byteSize, Size byteCapacity)
     {
-        struct Block block;
+        Block block;
         block.Data = (byte*)data;
         block.ByteSize = byteSize;
         block.ByteCapacity = byteCapacity;
-        CHECK_INDEX_NO_INFO(byteSize, 0, block.ByteCapacity, "byteSize", "CreateBlock");
+        CHECK_INDEX(byteSize, 0, block.ByteCapacity, "byteSize", "Block::CreateBlock");
 
         return block;
     } 
-    struct BlockView CreateBlockView(const void * data, Size byteSize, Size byteCapacity)
+    BlockView CreateBlockView(const void * data, Size byteSize, Size byteCapacity)
     {
-        struct BlockView block;
+        BlockView block;
         block.Data = (byte*)data;
         block.ByteSize = byteSize;
         block.ByteCapacity = byteCapacity;
-        CHECK_INDEX_NO_INFO(byteSize, 0, block.ByteCapacity, "byteSize", "CreateBlockView");
+        CHECK_INDEX(byteSize, 0, block.ByteCapacity, "byteSize", "Block::CreateBlockView");
 
         return block;
     }
 
-    struct Block CreateEmptyBlock()
+    Block CreateEmptyBlock()
     {
         return CreateBlock(NULL, 0, 0);
     }
-    struct BlockView CreateEmptyBlockView()
+    BlockView CreateEmptyBlockView()
     {
         return CreateBlockView(NULL, 0, 0);
     }
 
-    inline struct BlockView ToBlockView(const struct Block * block)
+    inline BlockView ToBlockView(const Block * block)
     {
         return CreateBlockView(block->Data, block->ByteSize, block->ByteCapacity);
     }   
 
 #if defined (INCLUDE_BLOCKS_ALLOC)
-    inline struct Block AllocateBlock(Size byteCapacity)
+    inline Block AllocateBlock(Size byteCapacity)
     {
         byte * allocated = (byte*)malloc(byteCapacity*sizeof(byte));
         return CreateBlock(allocated, 0, byteCapacity);
     }
         
-    inline void ReallocateBlock(struct Block* block, Size newCapacity)
+    inline void ReallocateBlock(Block* block, Size newCapacity)
     {
         block->Data = (byte*)realloc(block->Data, newCapacity);
         block->ByteCapacity = newCapacity;
     }    
+
+    inline void FreeBlock(Block* block)
+    {
+        free(block->Data);
+    }
 
     #define LOG_2 0.69314718055995
     Size CalculateGrowthFactor(Size currentSize, Size minNewSize)
@@ -173,25 +135,39 @@ static char Error = false;
         return finalMultiply;
     }
 
-    Bool GrowBlockToFit(struct Block* block, Size toFits)
+    Bool GrowBlock(Block* block, Size toFit)
     {
-        if(block->ByteCapacity >= toFits)
-            return FALSE;
-        
-        if(block->ByteCapacity == 0)
+        if(block->Data == NULL)
         {
-            ReallocateBlock(block, toFits);
+            *block = AllocateBlock(toFit);
             return TRUE;
         }
 
-        ReallocateBlock(block, block->ByteCapacity*CalculateGrowthFactor(block->ByteCapacity, toFits));
+        if(block->ByteCapacity >= toFit)
+            return FALSE;
+        
+        Size newSize;
+        if(block->ByteCapacity == 0)
+            newSize = toFit;
+        else
+            newSize = block->ByteCapacity*CalculateGrowthFactor(block->ByteCapacity, toFit);
+
+        ReallocateBlock(block, newSize);
         return TRUE;
     }
 
-    inline void FreeBlock(struct Block* block)
+    Bool ShrinkBlock(Block* block)
     {
+        block->ByteCapacity = 0;
+        block->ByteSize = 0;
+
+        if(block->Data == NULL)
+            return FALSE;
+
         free(block->Data);
+        return TRUE;
     }
+
 #endif
 
 #endif
@@ -232,36 +208,36 @@ static char Error = false;
 
         return returnStatus;
     }
-    inline Bool Append(struct Block* to, void * what, Size whatSize)
+    inline Bool Append(Block* to, void * what, Size whatSize)
     {
         return CopyTo(to, what, whatSize, to->ByteSize);
     }
 
-    inline Bool CopyBlockTo(struct Block* to, const struct Block* from, Size byteIndex)
+    inline Bool CopyBlockTo(Block* to, const Block* from, Size byteIndex)
     {
-        CHECK_INDEX_NO_INFO(byteIndex, 1, to->ByteCapacity, "byteIndex", "CopyBlockTo");
+        CHECK_INDEX(byteIndex, 1, to->ByteSize, "byteIndex", "Block::CopyBlockTo");
         return CopyTo(to, from->Data, from->ByteSize, byteIndex);
     }
-    inline Bool CopyBlockViewTo(struct Block* to, const struct BlockView* from, Size byteIndex)
+    inline Bool CopyBlockViewTo(Block* to, const BlockView* from, Size byteIndex)
     {
-        CHECK_INDEX_NO_INFO(byteIndex, 1, to->ByteCapacity, "byteIndex", "CopyBlockViewTo");
+        CHECK_INDEX(byteIndex, 1, to->ByteSize, "byteIndex", "Block::CopyBlockViewTo");
         return CopyTo(to, from->Data, from->ByteSize, byteIndex);
     }
 
-    inline Bool CopyBlock(struct Block* to, const struct Block* from)
+    inline Bool CopyBlock(Block* to, const Block* from)
     {
         return CopyBlockTo(to, from, 0);
     }
-    inline Bool CopyBlockView(struct Block* to, const struct BlockView* from)
+    inline Bool CopyBlockView(Block* to, const BlockView* from)
     {
         return CopyBlockViewTo(to, from, 0);
     }
     
-    inline Bool AppendBlock(struct Block* to, const struct Block* from)
+    inline Bool AppendBlock(Block* to, const Block* from)
     {
         return CopyBlockTo(to, from, to->ByteSize);
     }
-    inline Bool AppendBlockView(struct Block* to, const struct BlockView* from)
+    inline Bool AppendBlockView(Block* to, const BlockView* from)
     {
         return CopyBlockViewTo(to, from, to->ByteSize);
     }
@@ -272,21 +248,21 @@ static char Error = false;
     #define STRING_TERMINATOR '\0'
     inline void TerminateStringBlock(const Block* block)
     {
-        CHECK_INDEX_NO_INFO(block->ByteSize, 0, block->ByteCapacity + sizeof (char), "block->ByteSize", "TerminateStringBlock");
+        CHECK_INDEX(block->ByteSize, 0, block->ByteCapacity + sizeof (char), "block->ByteSize", "Block::TerminateStringBlock");
         block->Data[block->ByteSize] = STRING_TERMINATOR;
     }
     
-    inline void ReduceToStringBlock(struct Block* block)
+    inline void ReduceToStringBlock(Block* block)
     {
-        CHECK_INDEX_NO_INFO(block->ByteSize, sizeof (char), block->ByteCapacity, "block->ByteSize", "ReduceToStringBlock");
+        CHECK_INDEX(block->ByteSize, sizeof (char), block->ByteCapacity, "block->ByteSize", "Block::ReduceToStringBlock");
         block->ByteCapacity --;
         block->Data[block->ByteCapacity] = STRING_TERMINATOR;
     }
 
-    struct Block CreateStringBlock(char * data, Size size, Size capacity)
+    Block CreateStringBlock(char * data, Size size, Size capacity)
     {
-        struct Block block = CreateBlock((void*)data, size, capacity - 1);
-        CHECK_INDEX_NO_INFO(size, sizeof (char), capacity, "byteSize", "CreateStringBlock");
+        Block block = CreateBlock((void*)data, size, capacity - 1);
+        CHECK_INDEX(size, sizeof (char), capacity, "byteSize", "Block::CreateStringBlock");
 
         block.Data[block.ByteCapacity] = STRING_TERMINATOR;
         block.Data[block.ByteSize] = STRING_TERMINATOR;
@@ -294,32 +270,32 @@ static char Error = false;
         return block;
     }
 
-    inline struct BlockView CreateStringBlockView(char * data, Size size, Size capacity)
+    inline BlockView CreateStringBlockView(char * data, Size size, Size capacity)
     {
         return CreateBlockView((void*)data, size, capacity);
     }
     
-    inline struct BlockView ToStringBlockView(const char * str)
+    inline BlockView ToStringBlockView(const char * str)
     {
         const Size len = (Size)strlen(str);
         return CreateBlockView((void*)str, len, len);
     }
     
     #if defined (INCLUDE_BLOCKS_ALLOC)
-    struct Block AllocateStringBlock(Size byteCapacity)
+    Block AllocateStringBlock(Size byteCapacity)
     {
-        struct Block block = AllocateBlock(byteCapacity + 1);
+        Block block = AllocateBlock(byteCapacity + 1);
         ReduceToStringBlock(&block);
         return block;
     }
-    void ReallocateStringBlock(struct Block* block, Size newCapacity)
+    void ReallocateStringBlock(Block* block, Size newCapacity)
     {
         ReallocateBlock(block, newCapacity + 1);
         ReduceToStringBlock(block);
     }
-    Bool GrowStringBlockToFit(struct Block* block, Size toFitString)
+    Bool GrowStringBlock(Block* block, Size toFitString)
     {
-        const Bool state = GrowBlockToFit(block, toFitString + 1);
+        const Bool state = GrowBlock(block, toFitString + 1);
         if(state)
             ReduceToStringBlock(block);
         return state;
@@ -327,44 +303,44 @@ static char Error = false;
     #endif
 
     #if defined (INCLUDE_BLOCKS_COPY)
-    Bool CopyStringBlockTo(struct Block* to, const struct Block* from, Size intIndex)
+    Bool CopyStringBlockTo(Block* to, const Block* from, Size intIndex)
     {
-        Bool state = CopyBlockTo(to, from, intIndex*sizeof(int));
+        Bool state = CopyBlockTo(to, from, intIndex);
         TerminateStringBlock(to);
         return state;
     }
-    Bool CopyStringBlockViewTo(struct Block* to, const struct BlockView* from, Size intIndex)
+    Bool CopyStringBlockViewTo(Block* to, const BlockView* from, Size intIndex)
     {
-        Bool state = CopyBlockViewTo(to, from, intIndex*sizeof(int));
+        Bool state = CopyBlockViewTo(to, from, intIndex);
         TerminateStringBlock(to);
         return state;
     }
     
-    inline Bool CopyStringBlock(struct Block* to, const struct Block* from)
+    inline Bool CopyStringBlock(Block* to, const Block* from)
     {
         return CopyStringBlockTo(to, from, 0);
     }
-    inline Bool CopyStringBlockView(struct Block* to, const struct BlockView* from)
+    inline Bool CopyStringBlockView(Block* to, const BlockView* from)
     {
         return CopyStringBlockViewTo(to, from, 0);
     }
     
-    inline Bool AppendStringBlock(struct Block* to, const struct Block* from)
+    inline Bool AppendStringBlock(Block* to, const Block* from)
     {
         return CopyStringBlockTo(to, from, to->ByteSize);
     }
-    inline Bool AppendStringBlockView(struct Block* to, const struct BlockView* from)
+    inline Bool AppendStringBlockView(Block* to, const BlockView* from)
     {
         return CopyStringBlockViewTo(to, from, to->ByteSize);
     }
     #endif
 
-    inline Bool AppendToStringBlock(struct Block* to, char appended)
+    inline Bool AppendToStringBlock(Block* to, char appended)
     {
         if(to->ByteSize >= to->ByteCapacity)
             return FALSE;
 
-        At(to, to->ByteSize, char) = appended;
+        BlockAt(to, to->ByteSize, char) = appended;
         SetSize(to, to->ByteSize + 1, char);
         TerminateStringBlock(to);
         return TRUE;
@@ -408,6 +384,7 @@ static char Error = false;
 namespace Blocks::Testing
 {
 
+
     TEST_CASE("Testing of everything", "[Everything]")
     {
         //Creating and allocating
@@ -415,9 +392,12 @@ namespace Blocks::Testing
         BlockView strLiteral = ToStringBlockView("A message");
 
         //Growing
-        GrowStringBlockToFit(&string, strLiteral.ByteSize);
+        GrowStringBlock(&string, GetSize(&strLiteral, char));
+
+        SetSize(&string, string.ByteCapacity, byte);
         CopyStringBlockView(&string, &strLiteral);
 
+        /*
         //Reallocating
         ReallocateStringBlock(&string, 200);
 
@@ -428,20 +408,20 @@ namespace Blocks::Testing
             printf("Whole string appended\n");
 
         //Char manipulation
-        char firstChar = At(&string, 0, char);
-        At(&string, 1, char) = firstChar;
-        At(&string, 2, char) = firstChar;
-        At(&string, 3, char) = firstChar;
+        char firstChar = BlockAt(&string, 0, char);
+        BlockAt(&string, 1, char) = firstChar;
+        BlockAt(&string, 2, char) = firstChar;
+        BlockAt(&string, 3, char) = firstChar;
 
         //Shrinking
         SetSize(&string, 4, char);
         TerminateStringBlock(&string);
+        */
 
         //Freeing
         FreeBlock(&string);
     }
-
-    /*
+/*
     TEST_CASE("[Blocks::CreateEmptyBlock] : CreateEmptyBlock should create an empty block", "[Blocks][CreateEmptyBlock]")
     {
         Block block = CreateEmptyBlock();

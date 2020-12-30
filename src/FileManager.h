@@ -8,16 +8,16 @@ namespace cio::Internal
 {
     //Class responsible for safe management of the FILE pointer
     template<typename Adapter>
-    class UnadaptedFileManager : public Adapter
+    class UnadaptedFileManager
     {
         public:
-            using OsCharType    = typename Adapter::CharType;
             using ThisType      = UnadaptedFileManager;
 
         private:
             using RequiredActions = typename OpenMode::RequiredActions;
 
         public:
+            using OsCharType    = typename Adapter::CharType;
             using OpenMode      = BasicOpenMode<OsCharType>;
             using OsString      = String<OsCharType>;
             using OsStringView  = StringView<OsCharType>;
@@ -58,8 +58,10 @@ namespace cio::Internal
             ~UnadaptedFileManager() noexcept {Close();}
 
         public:
-            inline CFile * REF           GetCFile()   {return FilePtr;}
-            inline EnabledOperations REF GetEnabled() {return Enabled;}
+            [[nodiscard]] inline CFile * REF           GetCFile() noexcept {return FilePtr;}
+            [[nodiscard]] inline const CFile *         GetCFile() const noexcept {return FilePtr;}
+            [[nodiscard]] inline EnabledOperations REF GetEnabled() noexcept {return Enabled;}
+            [[nodiscard]] inline EnabledOperations     GetEnabled() const noexcept {return Enabled;}
 
         public:
             inline void Swap(ThisType REF other) noexcept
@@ -77,14 +79,14 @@ namespace cio::Internal
             {
                 ThisType::CloseFile(this->FilePtr);
 
-                FilePtr = fopen(path.data(), openMode.data());
+                FilePtr = Adapter::Fopen(path.data(), openMode.data());
 
                 return IsOpen();
             }
 
         public:
-            inline bool IsOpen() const noexcept {return (FilePtr != nullptr);}
-            inline bool IsClosed() const noexcept {return (FilePtr == nullptr);}
+            [[nodiscard]] inline bool IsOpen() const noexcept {return (FilePtr != nullptr);}
+            [[nodiscard]] inline bool IsClosed() const noexcept {return (FilePtr == nullptr);}
 
         private:
             inline static bool CloseFile(CFile PTR filePtr) noexcept
@@ -92,7 +94,7 @@ namespace cio::Internal
                 if(filePtr == nullptr)
                     return true;
 
-                return (fclose(filePtr) == 0);
+                return (Adapter::Fclose(filePtr) == 0);
             }
 
         public:

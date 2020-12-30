@@ -8,6 +8,7 @@
 //#include "CIo/UnsafeFile.h"
 //#include "CIo/File.h"
 //#include "CIo/UseExamples.h"
+#include "CIo/NewUnsafeFile.h"
 
-#include "CIo/Temp.h"
-#include "CIo/Blocks.h"
+//#include "CIo/Temp.h"
+//#include "CIo/Blocks.h"

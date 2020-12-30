@@ -7,7 +7,7 @@ namespace cio::Internal
     //Final class that should safely encapsulate all necessary c File
     // functionality. All other classes should be provided as member types
     // acessible through BasicFile::ClassName
-    template<typename Adapter, typename UnsafeFileArg = UnadaptedUnsafeFile<Adapter>>
+    template<typename Adapter, typename UnsafeFileArg>
     class UnadaptedFile : public UnsafeFileArg
     {
         private:
@@ -41,58 +41,39 @@ namespace cio::Internal
             inline UnadaptedFile(const OsStringView path, OpenModeTypes ... openModes) noexcept : UnsafeFile(path, openModes...)
             {}
 
-        private:
-            inline UnsafeFile REF GetUnsafe() noexcept
-            {
-                return static_cast<UnsafeFile REF>(PTR_VAL(this));
-            }
-            inline const UnsafeFile REF GetUnsafe() const noexcept
-            {
-                return static_cast<const UnsafeFile REF>(PTR_VAL(this));
-            }
-
         public:
-            bool WasEndOfFileRieched() const noexcept
+            [[nodiscard]] bool WasEndOfFileRieched() noexcept
             {
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafe().WasEndOfFileRieched();
+                return this->UnsafeFileArg::WasEndOfFileRieched();
             }
 
         public:
-            inline Position GetPos() const noexcept //ftell
-            {
-                switch (GetEnabled())
-                {
-                    case EnabledOperations::Closed: return Position();
-                    default:                     return GetUnsafe().GetPos();
-                }
-            }
-
-            inline bool SavePos(Position REF pos) const noexcept //fgetpos
+            inline bool SavePos(Position REF pos) noexcept //fgetpos
             {
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed: return false;
-                    default:                     return GetUnsafe().SavePos(pos);
+                    default:                     return UnsafeFileArg::SavePos(pos);
                 }
             }
-            inline bool RestorePos(const Position REF pos) const noexcept //fsetpos
+            inline bool RestorePos(const Position REF pos) noexcept //fsetpos
             {
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed: return false;
-                    default:                     return GetUnsafe().RestorePos(pos);
+                    default:                     return UnsafeFileArg::RestorePos(pos);
                 }
             }
 
-            Offset GetOffset() noexcept
+            [[nodiscard]] Offset GetOffset() noexcept
             {
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed: return ThisType::ErrorPos;
-                    default:                     return GetUnsafe().GetOffset();
+                    default:                     return UnsafeFileArg::GetOffset();
                 }
             }
 
@@ -101,7 +82,7 @@ namespace cio::Internal
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed: return false;
-                    default:                     return GetUnsafe().MoveTo(offset, from);
+                    default:                     return UnsafeFileArg::MoveTo(offset, from);
                 }
             }
             void MoveToBeggining() noexcept
@@ -109,7 +90,7 @@ namespace cio::Internal
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed: return;
-                    default:                     return GetUnsafe().MoveToBeggining();
+                    default:                     return UnsafeFileArg::MoveToBeggining();
                 }
             }
             void MoveToEnd() noexcept
@@ -117,7 +98,7 @@ namespace cio::Internal
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed: return;
-                    default:                     return GetUnsafe().MoveToEnd();
+                    default:                     return UnsafeFileArg::MoveToEnd();
                 }
             }
             bool MoveBy(Offset offset) noexcept
@@ -125,108 +106,108 @@ namespace cio::Internal
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed: return false;
-                    default:                     return GetUnsafe().MoveBy(offset);
+                    default:                     return UnsafeFileArg::MoveBy(offset);
                 }
             }
 
         public:
             template<typename PointerType>
-            [[nodiscard]] bool Read(PointerType PTR ptrToBuffer, Size count) noexcept
+            bool Read(PointerType PTR ptrToBuffer, Size count) noexcept
             {
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed:
                     case EnabledOperations::None:
                     case EnabledOperations::Write:  return false;
-                    default:                     return GetUnsafe().Read(ptrToBuffer, count);
+                    default:                     return UnsafeFileArg::Read(ptrToBuffer, count);
                 }
             }
 
             template<typename PointerType>
-            [[nodiscard]] Size ReadAndCount(PointerType PTR ptrToBuffer, Size count) noexcept
+            Size ReadAndCount(PointerType PTR ptrToBuffer, Size count) noexcept
             {
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed:
                     case EnabledOperations::None:
                     case EnabledOperations::Write:  return 0;
-                    default:                     return GetUnsafe().ReadAndCount(ptrToBuffer, count);
+                    default:                     return UnsafeFileArg::ReadAndCount(ptrToBuffer, count);
                 }
             }
 
             template<typename ObjectType>
-            [[nodiscard]] bool ReadObject(ObjectType RVALUE_REF object) noexcept
+            bool ReadObject(ObjectType RVALUE_REF object) noexcept
             {
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed:
                     case EnabledOperations::None:
                     case EnabledOperations::Write:  return false;
-                    default:                     return GetUnsafe().ReadObject(object);
+                    default:                     return UnsafeFileArg::ReadObject(object);
                 }
             }
 
             template<typename CharT>
-            [[nodiscard]] inline bool ReadString(String<CharT> REF output) noexcept
+            bool ReadString(String<CharT> REF output) noexcept
             {
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed:
                     case EnabledOperations::None:
                     case EnabledOperations::Write:  return false;
-                    default:                     return GetUnsafe().ReadString(output);
+                    default:                     return UnsafeFileArg::ReadString(output);
                 }
             }
 
-
         public:
             template<typename PointerType>
-            [[nodiscard]] bool Write(PointerType PTR ptrToData, Size count) noexcept
+            bool Write(PointerType PTR ptrToData, Size count) noexcept
             {
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed:
                     case EnabledOperations::None:
                     case EnabledOperations::Read:  return false;
-                    default:                    return GetUnsafe().Write(ptrToData, count);
+                    default:                    return UnsafeFileArg::Write(ptrToData, count);
                 }
             }
+
             template<typename PointerType>
-            [[nodiscard]] Size WriteAndCount(PointerType PTR ptrToData, Size count) noexcept
+            Size WriteAndCount(PointerType PTR ptrToData, Size count) noexcept
             {
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed:
                     case EnabledOperations::None:
                     case EnabledOperations::Read:  return 0;
-                    default:                    return GetUnsafe().WriteAndCount(ptrToData, count);
+                    default:                    return UnsafeFileArg::WriteAndCount(ptrToData, count);
                 }
             }
+
             template<typename ObjectType>
-            [[nodiscard]] bool WriteObject(ObjectType RVALUE_REF object) noexcept
+            bool WriteObject(ObjectType RVALUE_REF object) noexcept
             {
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed:
                     case EnabledOperations::None:
                     case EnabledOperations::Read:  return false;
-                    default:                    return GetUnsafe().WriteObject(object);
+                    default:                    return UnsafeFileArg::WriteObject(object);
                 }
             }
 
             template <typename T,
                       std::enable_if_t<IsAnyString_v<T>, int> = 0>
-            [[nodiscard]] bool WriteString(T RVALUE_REF str) noexcept
+            bool WriteString(T RVALUE_REF str) noexcept
             {
                 switch (GetEnabled())
                 {
                     case EnabledOperations::Closed:
                     case EnabledOperations::None:
                     case EnabledOperations::Read:  return false;
-                    default:                    return GetUnsafe().WriteString(std::forward(str));
+                    default:                    return UnsafeFileArg::WriteString(std::forward(str));
                 }
             }
-
 
         public:
             bool SetBuffer(void PTR bufferPtr, Size bufferSize, BufferingMode mode) noexcept
@@ -234,30 +215,30 @@ namespace cio::Internal
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafe().SetBuffer(bufferPtr, bufferSize, mode);
+                return this->UnsafeFileArg::SetBuffer(bufferPtr, bufferSize, mode);
             }
             void Flush() noexcept
             {
                 if(this->IsClosed())
                     return;
 
-                return this->GetUnsafe().Flush();
+                return this->UnsafeFileArg::Flush();
             }
-            void SwitchBetweenReadAndWrite() noexcept
+            void ClearState() noexcept
             {
                 if(this->IsClosed())
                     return;
 
-                return this->GetUnsafe().SwitchBetweenReadAndWrite();
+                return this->UnsafeFileArg::ClearState();
             }
 
         public:
-            FileSize GetFileSize() const noexcept
+            [[nodiscard]] FileSize GetFileSize() noexcept
             {
                 if(this->IsClosed())
                     return UnsafeFile::ErrorSize;
 
-                return this->GetUnsafe().GetFileSize();
+                return this->UnsafeFileArg::GetFileSize();
             }
     };
 }
